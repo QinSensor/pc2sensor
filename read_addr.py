@@ -1,7 +1,9 @@
 import asyncio
 from bleak import BleakClient, BleakScanner
 
-ADDRESS = "D5:D0:F9:30:83:D7"  # Your BLE device MAC address
+# ADDRESS = "D5:D0:F9:30:83:D7"  # Your BLE device MAC address
+# ADDRESS = "FA:E2:AD:E2:8D:99"  # Your BLE device MAC address
+ADDRESS = "FB:0C:16:50:98:DB"  # Your BLE device MAC address
 
 NOTIFY_CHARACTERISTIC_UUID = "1c930020-d459-11e7-9296-b8e856369374"
 WRITE_CHARACTERISTIC_UUID = "1c930030-d459-11e7-9296-b8e856369374"
@@ -25,12 +27,12 @@ async def main():
 
         await client.connect()
     
-        svcs = client.services  # no await here, it's a property
-        for service in svcs:
-            print(f"Service: {service.uuid}")
-            for char in service.characteristics:
-                props = ",".join(char.properties)
-                print(f"  Characteristic: {char.uuid} - Properties: {props}")
+        # svcs = client.services  # no await here, it's a property
+        # for service in svcs:
+        #     print(f"Service: {service.uuid}")
+        #     for char in service.characteristics:
+        #         props = ",".join(char.properties)
+        #         print(f"  Characteristic: {char.uuid} - Properties: {props}")
 
         
         # Enable notifications

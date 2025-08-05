@@ -1,10 +1,10 @@
 # reconnect in every 20 seconds
-
-
 import asyncio
 from bleak import BleakClient, BleakScanner, BleakError
-
-ADDRESS = "D5:D0:F9:30:83:D7"
+#
+# ADDRESS = "D5:D0:F9:30:83:D7"     # 1 axis
+# ADDRESS = "FA:E2:AD:E2:8D:99"   # 3 axis 40
+ADDRESS = "FB:0C:16:50:98:DB"       # 3 axis 39
 NOTIFY_CHARACTERISTIC_UUID = "1c930020-d459-11e7-9296-b8e856369374"
 WRITE_CHARACTERISTIC_UUID = "1c930030-d459-11e7-9296-b8e856369374"
 
@@ -27,12 +27,12 @@ async def connect_and_listen():
                 print("Connected.")
 
                 # Optionally, list services
-                svcs = client.services
-                for service in svcs:
-                    print(f"Service: {service.uuid}")
-                    for char in service.characteristics:
-                        props = ",".join(char.properties)
-                        print(f"  Characteristic: {char.uuid} - Properties: {props}")
+                # svcs = client.services
+                # for service in svcs:
+                #     print(f"Service: {service.uuid}")
+                #     for char in service.characteristics:
+                #         props = ",".join(char.properties)
+                #         print(f"  Characteristic: {char.uuid} - Properties: {props}")
 
                 # Start notifications
                 await client.start_notify(NOTIFY_CHARACTERISTIC_UUID, handle_notification)
@@ -56,7 +56,7 @@ async def connect_and_listen():
             print(f"Unexpected error: {e}. Retrying in 5 seconds...")
 
         # Wait before retrying
-        await asyncio.sleep(5)
+        await asyncio.sleep(15)
 
 async def main():
     await connect_and_listen()
