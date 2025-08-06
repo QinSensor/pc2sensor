@@ -3,9 +3,17 @@ import struct
 import asyncio
 from bleak import BleakClient, BleakScanner, BleakError
 #
-# ADDRESS = "D5:D0:F9:30:83:D7"     # 1 axis
-ADDRESS = "FA:E2:AD:E2:8D:99"   # 3 axis 40
-# ADDRESS = "FB:0C:16:50:98:DB"       # 3 axis 39
+
+# SENSOR_ADDRESSES = [
+#     "FA:E2:AD:E2:8D:99",  # 3 axis, 40---get data
+#     "FB:0C:16:50:98:DB",  # 3 axis, 39
+#     "D5:D0:F9:30:83:D7",  # 1 axis
+# ]
+# address = "D5:D0:F9:30:83:D7"     # 1 axis
+# address = "FA:E2:AD:E2:8D:99"   # 3 axis 40
+address = "FB:0C:16:50:98:DB"       # 3 axis 39
+
+
 DATA_UUID = "1c930020-d459-11e7-9296-b8e856369374"
 GAIN_UUID = "1c930022-d459-11e7-9296-b8e856369374"
 SAMPLE_RATE_UUID = "1c930023-d459-11e7-9296-b8e856369374"
@@ -20,21 +28,30 @@ def decode_g(data):
     accel_g = [(sample - 32768) * conversion_factor for sample in samples]
     return accel_g
 
-# Example 'handle_notification' function:
+
 def handle_notification(sender, data):
     values_g = decode_g(data)
-    print(f"Notification from {sender}: {values_g}")
 
-async def connect_and_listen():
+    # Example: round to 2 decimal places
+    rounded_values = [round(v, 2) for v in values_g]
+
+    # Convert to comma-separated string
+    values_str = ", ".join(map(str, rounded_values))
+
+    print(f"Notification from {sender}: [{values_str}]")
+
+async def connect_and_listen(address):
     global conversion_factor
+    client = None
 
     while True:
-        print("Scanning for device...")
-        devices = await BleakScanner.discover(timeout=30.0)
-        device = next((d for d in devices if d.address == ADDRESS), None)
+        print(f"[{address}] Scanning for device...")
+        devices = await BleakScanner.discover(timeout=30.0)  # default is 5 seconds
+        device = next((d for d in devices if d.address == address), None)
+
         if not device:
-            print(f"Device {ADDRESS} not found. Retrying in 20 seconds...")
-            await asyncio.sleep(20)
+            print(f"Device {address} not found. Retrying in 30 seconds...")
+            await asyncio.sleep(30)
             continue
 
         print(f"Connecting to {device.address}")
@@ -56,6 +73,7 @@ async def connect_and_listen():
                     calibration = int.from_bytes(cal_bytes, byteorder='little')
                     conversion_factor = 3.81 / calibration
                     print(f"Calibration: {calibration} (raw bytes: {cal_bytes.hex()})")
+                    print(f"conversion_factor: {conversion_factor}")
                 except Exception as e:
                     print(f"Failed to read Calibration characteristic: {e}")
 
@@ -95,10 +113,20 @@ async def connect_and_listen():
         except Exception as e:
             print(f"Unexpected error: {e}. Retrying in 5 seconds...")
 
+
+        finally:
+            if client.is_connected:
+                await client.disconnect()
+
         # Wait before retrying
         await asyncio.sleep(15)
 
+
+# async def main():
+#     for address in SENSOR_ADDRESSES:
+#         await connect_and_listen(address)  # process one sensor at a time
+
 async def main():
-    await connect_and_listen()
+    await connect_and_listen(address)
 
 asyncio.run(main())

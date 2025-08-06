@@ -6,8 +6,10 @@ SENSOR_ADDRESSES = [
     "FB:0C:16:50:98:DB",  # 3 axis, 39
     "D5:D0:F9:30:83:D7",  # 1 axis
 ]
-NOTIFY_CHARACTERISTIC_UUID = "1c930020-d459-11e7-9296-b8e856369374"
-WRITE_CHARACTERISTIC_UUID  = "1c930023-d459-11e7-9296-b8e856369374"
+NOTIFY_UUID = "1c930020-d459-11e7-9296-b8e856369374"
+
+WRITE_UUID  = "1c930023-d459-11e7-9296-b8e856369374"
+
 
 async def sensor_session(address):
     received = []
@@ -32,7 +34,7 @@ async def sensor_session(address):
             for char in service.characteristics:
                 print(f"   Characteristic: {char.uuid}  Properties: {char.properties}")
 
-        await client.start_notify(NOTIFY_CHARACTERISTIC_UUID, handle_notification)
+        await client.start_notify(NOTIFY_UUID, handle_notification)
         print(f"[{address}] Notifications started.")
 
         await asyncio.sleep(1)  # Wait for notification setup
@@ -42,7 +44,7 @@ async def sensor_session(address):
 
         await asyncio.sleep(10)  # Listen for notifications
 
-        await client.stop_notify(NOTIFY_CHARACTERISTIC_UUID)
+        await client.stop_notify(NOTIFY_UUID)
         print(f"[{address}] Notifications stopped.")
 
     print(f"[{address}] Disconnected cleanly.")
