@@ -1,0 +1,1 @@
+# Map of all invariants to show in the table
