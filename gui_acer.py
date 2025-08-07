@@ -11,7 +11,7 @@ UUID_MAP = {
     'mode': "1c930031-d459-11e7-9296-b8e856369374",
     'holdoff_interval': "1c93003a-d459-11e7-9296-b8e856369374",
     'wakeup_interval': "1c930036-d459-11e7-9296-b8e856369374",
-    'trace': "1c930024-d459-11e7-9296-b8e856369374",
+    'trace_len': "1c930024-d459-11e7-9296-b8e856369374",
     'axes': "1c93002b-d459-11e7-9296-b8e856369374",
     'trigger_delay': "1c930025-d459-11e7-9296-b8e856369374",
 
@@ -38,8 +38,29 @@ SAMPLE_RATE_MAP = [
 GAIN_OPTIONS = [1, 2, 4, 8]
 WINDOW_TYPES = ["Hann", "Rectangular", "Hamming"]
 OPERATING_MODES = ["Wakeup", "Continuous"]
-TRACE_LENGTHS = [256, 512, 1024, 2048, 4096]
 AXES = [1, 2, 3]
+
+TRACE_LEN_TABLE = [
+    (0, 64),
+    (1, 128),
+    (2, 256),
+    (3, 512),
+    (4, 1024),
+    (5, 2048),
+    (6, 4096),
+    (7, 8192),
+    (8, 16384),
+    (9, 32768),
+    (10, 65536),
+    (11, 131072),
+    (12, 262144),
+    (13, 524288),
+    (14, 1048576),
+    (15, 2097152)
+]
+
+
+
 
 
 def find_key_by_val(d, val):
@@ -57,7 +78,11 @@ class BluVibGUI:
         self.selected_window = tk.StringVar()
         self.selected_mode = tk.StringVar()
         self.selected_sample_rate = tk.StringVar()
+        # In your GUI __init__ or build_form:
         self.selected_trace_length = tk.StringVar()
+
+
+        # self.selected_trace_length = tk.StringVar()
         self.selected_gain = tk.StringVar()
         self.selected_axes = tk.StringVar()
         self.wakeup_interval = tk.StringVar()
@@ -80,9 +105,9 @@ class BluVibGUI:
         tk.Label(self.root, text="Sample Rate (Hz):").grid(row=row, column=0, sticky=tk.W)
         ttk.Combobox(self.root, textvariable=self.selected_sample_rate,
                      values=[str(hz) for _, hz in SAMPLE_RATE_MAP], state="readonly").grid(row=row, column=1)
-        row += 1
-        tk.Label(self.root, text="Trace Length (Samples):").grid(row=row, column=0, sticky=tk.W)
-        ttk.Combobox(self.root, textvariable=self.selected_trace_length, values=[str(x) for x in TRACE_LENGTHS], state="readonly").grid(row=row, column=1)
+        # row += 1
+        # tk.Label(self.root, text="Trace Length (Samples):").grid(row=row, column=0, sticky=tk.W)
+        # ttk.Combobox(self.root, textvariable=self.selected_trace_length, values=[str(x) for x in TRACE_LENGTHS], state="readonly").grid(row=row, column=1)
         row += 1
         tk.Label(self.root, text="Gain:").grid(row=row, column=0, sticky=tk.W)
         ttk.Combobox(self.root, textvariable=self.selected_gain, values=[str(x) for x in GAIN_OPTIONS], state="readonly").grid(row=row, column=1)
@@ -109,6 +134,24 @@ class BluVibGUI:
         tk.Button(btn_frame, text="Factory Reset", command=self.on_factory_reset).pack(side=tk.LEFT, padx=2)
         row += 1
         tk.Label(self.root, textvariable=self.status, fg="blue").grid(row=row, column=0, columnspan=2, pady=6)
+
+        ttk.Combobox(
+            self.root,
+            textvariable=self.selected_trace_length,
+            values=[str(x[1]) for x in TRACE_LEN_TABLE],  # Show sample counts
+            state="readonly"
+        ).grid(row=row, column=1)
+
+        # Reading from BLE:
+        value = int.from_bytes(await self.client.read_gatt_char(TRACE_LEN_UUID), byteorder="little")
+        length_map = dict(TRACE_LEN_TABLE)
+        current_length = length_map.get(value, 512)
+        self.selected_trace_length.set(str(current_length))
+
+        # Writing to BLE:
+        desired_length = int(self.selected_trace_length.get())
+        value = next(idx for idx, cnt in TRACE_LEN_TABLE if cnt == desired_length)
+        await self.client.write_gatt_char(TRACE_LEN_UUID, value.to_bytes(1, byteorder="little"))
 
     def connect_and_read_all(self):
         try:
@@ -148,10 +191,10 @@ class BluVibGUI:
                 self.selected_mode.set(OPERATING_MODES[mode_val])
             else:
                 self.selected_mode.set(OPERATING_MODES[0])
-        # Trace Length
-        trace_val = await self.read_value(UUID_MAP['trace'])
-        if trace_val is not None:
-            self.selected_trace_length.set(str(TRACE_LENGTHS[trace_val]) if trace_val < len(TRACE_LENGTHS) else str(TRACE_LENGTHS[0]))
+        # # Trace Length
+        # trace_val = await self.read_value(UUID_MAP['trace'])
+        # if trace_val is not None:
+        #     self.selected_trace_length.set(str(TRACE_LENGTHS[trace_val]) if trace_val < len(TRACE_LENGTHS) else str(TRACE_LENGTHS[0]))
         # Axes
         axes_val = await self.read_value(UUID_MAP['axes'])
         if axes_val is not None:
