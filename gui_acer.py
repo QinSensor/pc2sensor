@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 from bleak import BleakClient
 
+
 UUID_MAP = {
     'sample_rate': "1c930023-d459-11e7-9296-b8e856369374",
     'gain': "1c930022-d459-11e7-9296-b8e856369374",
