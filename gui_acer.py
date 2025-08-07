@@ -3,6 +3,7 @@ import threading
 import tkinter as tk
 from tkinter import ttk
 from bleak import BleakClient
+import asyncio
 
 
 UUID_MAP = {
@@ -24,8 +25,6 @@ UUID_MAP = {
 
 ADDRESS = "FA:E2:AD:E2:8D:99"
 
-# Example UUIDs for all parameters—replace with your specific ones.
-
 SAMPLE_RATE_MAP = [
     (1, 25600),
     (2, 12800),
@@ -36,7 +35,7 @@ SAMPLE_RATE_MAP = [
     (7, 256)
 ]
 GAIN_OPTIONS = [1, 2, 4, 8]
-WINDOW_TYPES = ["Hann", "Rectangular", "Hamming"]
+# WINDOW_TYPES = ["Hann", "Rectangular", "Hamming"]
 OPERATING_MODES = ["Wakeup", "Continuous"]
 AXES = [1, 2, 3]
 
@@ -87,17 +86,22 @@ class BluVibGUI:
         self.selected_axes = tk.StringVar()
         self.wakeup_interval = tk.StringVar()
         self.holdoff_interval = tk.StringVar()
-        self.trigger_level = tk.StringVar()
+        # self.trigger_level = tk.StringVar()
         self.trigger_delay = tk.StringVar()
-        self.build_form()
+
+
+
+        asyncio.create_task(self.build_form())
+
+        # self.build_form()
         threading.Thread(target=self.connect_and_read_all, daemon=True).start()
 
-    def build_form(self):
+    async def build_form(self):
         row = 0
         tk.Label(self.root, text="BluVib290039", font=("Arial", 16)).grid(row=row, column=0, columnspan=2, pady=6)
-        row += 1
-        tk.Label(self.root, text="Window:").grid(row=row, column=0, sticky=tk.W)
-        ttk.Combobox(self.root, textvariable=self.selected_window, values=WINDOW_TYPES, state="readonly").grid(row=row, column=1)
+        # row += 1
+        # tk.Label(self.root, text="Window:").grid(row=row, column=0, sticky=tk.W)
+        # ttk.Combobox(self.root, textvariable=self.selected_window, values=WINDOW_TYPES, state="readonly").grid(row=row, column=1)
         row += 1
         tk.Label(self.root, text="Operating Mode:").grid(row=row, column=0, sticky=tk.W)
         ttk.Combobox(self.root, textvariable=self.selected_mode, values=OPERATING_MODES, state="readonly").grid(row=row, column=1)
@@ -120,9 +124,9 @@ class BluVibGUI:
         row += 1
         tk.Label(self.root, text="Holdoff Interval (s):").grid(row=row, column=0, sticky=tk.W)
         tk.Entry(self.root, textvariable=self.holdoff_interval).grid(row=row, column=1)
-        row += 1
-        tk.Label(self.root, text="Trigger Level (g):").grid(row=row, column=0, sticky=tk.W)
-        tk.Entry(self.root, textvariable=self.trigger_level).grid(row=row, column=1)
+        # row += 1
+        # tk.Label(self.root, text="Trigger Level (g):").grid(row=row, column=0, sticky=tk.W)
+        # tk.Entry(self.root, textvariable=self.trigger_level).grid(row=row, column=1)
         row += 1
         tk.Label(self.root, text="Trigger Delay (%):").grid(row=row, column=0, sticky=tk.W)
         tk.Entry(self.root, textvariable=self.trigger_delay).grid(row=row, column=1)
@@ -143,15 +147,34 @@ class BluVibGUI:
         ).grid(row=row, column=1)
 
         # Reading from BLE:
-        value = int.from_bytes(await self.client.read_gatt_char(TRACE_LEN_UUID), byteorder="little")
+        trace_len_uuid = UUID_MAP['trace_len']
+        value_bytes = await self.client.read_gatt_char(trace_len_uuid)
+        trace_idx = int.from_bytes(value_bytes, byteorder='little')
+
+        # Map index to actual sample count; fallback to default if not found
         length_map = dict(TRACE_LEN_TABLE)
-        current_length = length_map.get(value, 512)
-        self.selected_trace_length.set(str(current_length))
+        current_length = length_map.get(trace_idx, 512)
+
+        self.selected_trace_length.set(str(current_length))  # update combobox selection
+        # value = int.from_bytes(await self.client.read_gatt_char('trace_len'), byteorder="little")
+        # length_map = dict(TRACE_LEN_TABLE)
+        # current_length = length_map.get(value, 512)
+        # self.selected_trace_length.set(str(current_length))
 
         # Writing to BLE:
-        desired_length = int(self.selected_trace_length.get())
-        value = next(idx for idx, cnt in TRACE_LEN_TABLE if cnt == desired_length)
-        await self.client.write_gatt_char(TRACE_LEN_UUID, value.to_bytes(1, byteorder="little"))
+        # Convert user's selection (sample count string) back to index
+        try:
+            desired_length = int(self.selected_trace_length.get())
+            # Find the tuple with matching sample count
+            value = next(idx for idx, cnt in TRACE_LEN_TABLE if cnt == desired_length)
+            # Write the index as a single byte (assuming 1-byte index)
+            await self.client.write_gatt_char(trace_len_uuid, value.to_bytes(1, byteorder="little"))
+        except StopIteration:
+            # Handle case where user selection doesn't match any known count
+            print(f"Invalid trace length selected: {self.selected_trace_length.get()}")
+        # desired_length = int(self.selected_trace_length.get())
+        # value = next(idx for idx, cnt in TRACE_LEN_TABLE if cnt == desired_length)
+        # await self.client.write_gatt_char(TRACE_LEN_UUID, value.to_bytes(1, byteorder="little"))
 
     def connect_and_read_all(self):
         try:
@@ -177,13 +200,13 @@ class BluVibGUI:
         gain_val = await self.read_value(UUID_MAP['gain'])
         if gain_val is not None:
             self.selected_gain.set(str(gain_val))
-        # Window
-        window_val = await self.read_value(UUID_MAP['window'])
-        if window_val is not None:
-            if window_val < len(WINDOW_TYPES):
-                self.selected_window.set(WINDOW_TYPES[window_val])
-            else:
-                self.selected_window.set(WINDOW_TYPES[0])
+        # # Window
+        # window_val = await self.read_value(UUID_MAP['window'])
+        # if window_val is not None:
+        #     if window_val < len(WINDOW_TYPES):
+        #         self.selected_window.set(WINDOW_TYPES[window_val])
+        #     else:
+        #         self.selected_window.set(WINDOW_TYPES[0])
         # Mode
         mode_val = await self.read_value(UUID_MAP['mode'])
         if mode_val is not None:
@@ -206,9 +229,9 @@ class BluVibGUI:
         holdoff_val = await self.read_value(UUID_MAP['holdoff_interval'])
         if holdoff_val is not None:
             self.holdoff_interval.set(str(holdoff_val))
-        trig_lvl_val = await self.read_value(UUID_MAP['trigger_level'])
-        if trig_lvl_val is not None:
-            self.trigger_level.set(str(trig_lvl_val))
+        # trig_lvl_val = await self.read_value(UUID_MAP['trigger_level'])
+        # if trig_lvl_val is not None:
+        #     self.trigger_level.set(str(trig_lvl_val))
         trig_dly_val = await self.read_value(UUID_MAP['trigger_delay'])
         if trig_dly_val is not None:
             self.trigger_delay.set(str(trig_dly_val))
@@ -241,8 +264,8 @@ class BluVibGUI:
         # Gain
         await self.write_value(UUID_MAP['gain'], int(self.selected_gain.get()))
         # Window
-        if self.selected_window.get() in WINDOW_TYPES:
-            await self.write_value(UUID_MAP['window'], WINDOW_TYPES.index(self.selected_window.get()))
+        # if self.selected_window.get() in WINDOW_TYPES:
+        #     await self.write_value(UUID_MAP['window'], WINDOW_TYPES.index(self.selected_window.get()))
         # Mode
         if self.selected_mode.get() in OPERATING_MODES:
             await self.write_value(UUID_MAP['mode'], OPERATING_MODES.index(self.selected_mode.get()))
@@ -257,7 +280,7 @@ class BluVibGUI:
         # Scalars
         await self.write_value(UUID_MAP['wakeup_interval'], int(self.wakeup_interval.get()))
         await self.write_value(UUID_MAP['holdoff_interval'], int(self.holdoff_interval.get()))
-        await self.write_value(UUID_MAP['trigger_level'], int(self.trigger_level.get()))
+        # await self.write_value(UUID_MAP['trigger_level'], int(self.trigger_level.get()))
         await self.write_value(UUID_MAP['trigger_delay'], int(self.trigger_delay.get()))
 
     async def write_value(self, uuid, value):

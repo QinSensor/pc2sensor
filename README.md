@@ -36,10 +36,33 @@ with your own BluSensor address.
 
 ## ❓ Troubleshooting
 
-- **Cannot find device?**  
+**Cannot find device?**  
 - Verify the MAC address.
 - Make sure your BLE device is turned on and in range.
 - Ensure your PC's Bluetooth drivers are up to date.
+
+**Cannot connect sensor?**
+- Go to Windows Settings--> Bluetooth & Other Devices  ---> Turn off Bluetooth and Turn on again.
+- Magnate sensor to ensure that it is blinking.
+
+
+## Code Progress
+**1. Fetch data, calibrated**
+```bash
+    python connect.py
+   ```
+ 
+**2. GUI for variants, such as sample rate**
+```bash
+    python sample_rate.py
+```
+
+**3. Show all variants**
+```bash
+    python all_option.py
+```
+
+
 
 ---
 
