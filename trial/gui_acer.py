@@ -34,10 +34,7 @@ SAMPLE_RATE_MAP = [
     (6, 512),
     (7, 256)
 ]
-GAIN_OPTIONS = [1, 2, 4, 8]
-# WINDOW_TYPES = ["Hann", "Rectangular", "Hamming"]
-OPERATING_MODES = ["Wakeup", "Continuous"]
-AXES = [1, 2, 3]
+
 
 TRACE_LEN_TABLE = [
     (0, 64),
@@ -57,10 +54,6 @@ TRACE_LEN_TABLE = [
     (14, 1048576),
     (15, 2097152)
 ]
-
-
-
-
 
 def find_key_by_val(d, val):
     for k, v in d.items():

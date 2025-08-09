@@ -47,20 +47,35 @@ with your own BluSensor address.
 
 
 ## Code Progress
-**1. Fetch data, calibrated**
+**Run to Get GUI**
 ```bash
-    python connect.py
-   ```
- 
-**2. GUI for variants, such as sample rate**
-```bash
-    python sample_rate.py
-```
+    python main.py
+    ```
+[//]: # (**1. Fetch data, calibrated**)
 
-**3. Show all variants**
-```bash
-    python all_option.py
-```
+[//]: # (```bash)
+
+[//]: # (    python connect.py)
+
+[//]: # (   ```)
+
+[//]: # ( )
+[//]: # (**2. GUI for variants, such as sample rate**)
+
+[//]: # (```bash)
+
+[//]: # (    python sample_rate.py)
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (**3. Show all variants**)
+
+[//]: # (```bash)
+
+[//]: # (    python all_option.py)
+
+[//]: # (```)
 
 
 

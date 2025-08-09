@@ -6,7 +6,6 @@ from bleak import BleakClient
 
 ADDRESS = "FA:E2:AD:E2:8D:99"
 SAMPLE_RATE_UUID = "1c930023-d459-11e7-9296-b8e856369374"
-# Fill in other characteristic UUIDs below for full BLE functionality
 
 SAMPLE_RATE_MAP = [
     (1, 25600),
@@ -18,11 +17,13 @@ SAMPLE_RATE_MAP = [
     (7, 256)
 ]
 
-WINDOW_TYPES = ["Hann", "Rectangular", "Hamming"]  # Add more as needed
-OPERATING_MODES = ["Wakeup", "Continuous"]
-TRACE_LENGTHS = [256, 512, 1024, 2048, 4096]
-GAINS = [1, 2, 4, 8]
-AXES = [1, 2, 3]
+WINDOW_TYPES = ["Hann", "Hamming", "Blackman", "Nuttall", "Blackman-Nuttall",
+                "Blackman-Harris", "Flattop",  "Rectangular"]
+OPERATING_MODES = ["Manual", "Wakeup", "Wakeup+", "Ready",
+                   "Event", "MotionDetect"]
+TRACE_LENGTHS = [64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576, 2097152]
+GAINS = [1, 2, 4, 10]
+AXES = [1, 3]
 
 
 class BluVibGUI:
