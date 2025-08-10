@@ -38,6 +38,8 @@ class BLEDeviceScanner:
                 if dev.name and dev.name.startswith("BluVib"):
                     info = self.device_map.setdefault(dev.address, {
                         "name": dev.name,
+                        "address": dev.address,  # Add this line here
+
                         "connected": False,
                         "mode": "Manual",  # Qin: in this mode, mode is not read
                         "readings": 0,  # starts at 0
@@ -127,8 +129,8 @@ class BLEDeviceScanner:
     def open_device_window(self, device):
         """Open a new window for reading/writing the device UUIDs."""
         win = tk.Toplevel(self.root)
-        # BLEParametersApp_NoConnect(win, self.device_clients[device['address']])  # pass
-        BLEParametersApp_NoConnect(win, self.device_clients[device.address])
+        BLEParametersApp_NoConnect(win, self.device_clients[device['address']])  # pass
+        # BLEParametersApp_NoConnect(win, self.device_clients[device.address])
 
 
 
