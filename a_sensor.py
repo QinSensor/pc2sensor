@@ -1,13 +1,11 @@
-# for 1 specific sensor (Finished Auguest 9)
-
 import asyncio
 import tkinter as tk
 from tkinter import ttk
-from bleak import BleakClient
 import threading
+
+from ActionButtons import BLEActionButtons
 from sensor_map import UUID_MAP, MAPPINGS
 
-ADDRESS = "FA:E2:AD:E2:8D:99"
 
 class BLEParameterEditor:
     def __init__(self, parent, client, param_key):
@@ -90,7 +88,7 @@ class BLEParameterEditor:
             self.frame.after(0, lambda: self.status.set("Write failed"))
 
 
-class BLEParametersApp_NoConnect:
+class ASensorParameterApp:
     def __init__(self, root, client):
         self.root = root
         self.root.title("BLE Parameter Editor")
@@ -106,7 +104,14 @@ class BLEParametersApp_NoConnect:
             editor = BLEParameterEditor(self.main_frame, self.client, param_key)
             self.editors[param_key] = editor
 
-        self.enable_editors()  # no need to connect again
+        # Frame for buttons
+        self.buttons_frame = ttk.LabelFrame(self.main_frame, text="Device Actions")
+        self.buttons_frame.pack(fill="x", pady=10)
+
+        BLEActionButtons(self.buttons_frame, self.client)
+
+
+        self.enable_editors()
 
     def enable_editors(self):
         for editor in self.editors.values():

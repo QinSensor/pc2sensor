@@ -1,3 +1,12 @@
+UUID_MAP_BUTTON = {
+    'shutdown': "1c930040-d459-11e7-9296-b8e856369374",
+    'factory_reset': "1c930041-d459-11e7-9296-b8e856369374",
+    'restart': "1c930042-d459-11e7-9296-b8e856369374",
+
+
+    # ... Add as needed ...
+}
+
 
 
 UUID_MAP = {

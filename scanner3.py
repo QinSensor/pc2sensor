@@ -13,7 +13,7 @@ class BLEDeviceScanner:
         self.root = root
         self.root.title("BluVib Devices")
 
-        columns = ("UUID", "BLE Name", "Connected", "Mode", "Readings", "Seen", "Action")
+        columns = ("Mac Address", "BLE Name", "Connected", "Mode", "Readings", "Seen", "Action")
         self.tree = ttk.Treeview(root, columns=columns, show="headings")
         for col in columns:
             self.tree.heading(col, text=col)
@@ -67,21 +67,6 @@ class BLEDeviceScanner:
                     else:
                         info["connected"] = False
 
-                    # try:
-                    #     async with BleakClient(dev.address) as client:
-                    #         if client.is_connected:
-                    #             info["connected"] = True
-                    #             # Only update mode if connected!
-                    #             info["mode"] = await self.read_mode_async(client)
-                    #             info["readings"] += 1  # increment if connected/read successful
-                    #         else:
-                    #             info["connected"] = False
-                    #             # Do NOT change mode here
-                    # except Exception as e:
-                    #     print(f"Connection failed to {dev.address}:", e)
-                    #     info["connected"] = False
-                    #     # Do NOT change mode here
-
             self.refresh_table()
             await asyncio.sleep(10)
 
@@ -130,9 +115,6 @@ class BLEDeviceScanner:
         """Open a new window for reading/writing the device UUIDs."""
         win = tk.Toplevel(self.root)
         BLEParametersApp_NoConnect(win, self.device_clients[device['address']])  # pass
-        # BLEParametersApp_NoConnect(win, self.device_clients[device.address])
-
-
 
 
 if __name__ == "__main__":
