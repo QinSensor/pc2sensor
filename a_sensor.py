@@ -109,8 +109,11 @@ class ASensorParameterApp:
         self.disconnect_btn = ttk.Button(conn_frame, text="Disconnect", command=self.disconnect_sensor)
         self.disconnect_btn.pack(side="left", padx=5)
 
-        self.conn_status = tk.StringVar(value="Unknown")
+        self.conn_status = tk.StringVar(value="Connect Status")
         ttk.Label(conn_frame, textvariable=self.conn_status, foreground="blue").pack(side="left", padx=10)
+
+        # Initial button states
+        self.update_button_states()
 
         # Create editors but disable until connected
         for param_key in UUID_MAP.keys():
@@ -139,7 +142,7 @@ class ASensorParameterApp:
             except Exception as e:
                 print(f"Failed to connect: {e}")
                 self.conn_status.set("Connect failed")
-
+            self.root.after(0, self.update_button_states)
         threading.Thread(target=do_connect, daemon=True).start()
 
     def disconnect_sensor(self):
@@ -152,8 +155,18 @@ class ASensorParameterApp:
             except Exception as e:
                 print(f"Failed to disconnect: {e}")
                 self.conn_status.set("Disconnect failed")
-
+        self.root.after(0, self.update_button_states)
         threading.Thread(target=do_disconnect, daemon=True).start()
+
+    def update_button_states(self):
+        """Enable/disable connect/disconnect buttons based on current status."""
+        status = self.conn_status.get().lower()
+        if status == "connected":
+            self.connect_btn["state"] = "disabled"
+            self.disconnect_btn["state"] = "normal"
+        else:
+            self.connect_btn["state"] = "normal"
+            self.disconnect_btn["state"] = "disabled"
 
     def enable_editors(self):
         for editor in self.editors.values():
