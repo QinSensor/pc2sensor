@@ -20,6 +20,8 @@ class BLEDeviceScanner:
             self.tree.column(col, width=150)
         self.tree.pack(fill=tk.BOTH, expand=True)
 
+        self.tree.bind("<ButtonRelease-1>", self.on_click)
+
         self.device_map = {}  # {address: {...}}
         threading.Thread(target=self.scan_loop, daemon=True).start()
 
@@ -88,6 +90,27 @@ class BLEDeviceScanner:
                 seen_str,
                 "View"
             ))
+
+    def on_click(self, event):
+        """Handle clicks on the 'View' action column."""
+        selected_item = self.tree.selection()
+        if not selected_item:
+            return
+        item = selected_item[0]
+        values = self.tree.item(item, "values")
+        if values and values[-1] == "View":
+            device_address = values[0]
+            if device_address in self.device_map:
+                self.open_device_window(self.device_map[device_address])
+
+    def open_device_window(self, device):
+        """Open a new window for reading/writing the device UUIDs."""
+        win = tk.Toplevel(self.root)
+        win.title(f"Device: {device.name} ({device.address})")
+        tk.Label(win, text=f"Address: {device.address}").pack(pady=5)
+        tk.Label(win, text="(Here we add UUID reading/writing widgets from yesterday)").pack(pady=10)
+        # TODO: integrate yesterday's UUID read/write code here
+
 
 
 if __name__ == "__main__":

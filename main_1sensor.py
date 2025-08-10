@@ -130,6 +130,8 @@ class BLEParametersApp:
             # Trigger read again after enabling
             threading.Thread(target=editor.read_value, daemon=True).start()
 
+
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = BLEParametersApp(root)
