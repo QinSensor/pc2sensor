@@ -6,7 +6,7 @@ from tkinter import ttk
 from bleak import BleakScanner, BleakClient
 
 from sensor_map import UUID_MAP, MAPPINGS  # Ensure you have these mappings
-
+from a_sensor import BLEParametersApp_NoConnect
 
 class BLEDeviceScanner:
     def __init__(self, root):
@@ -23,6 +23,7 @@ class BLEDeviceScanner:
         self.tree.bind("<ButtonRelease-1>", self.on_click)
 
         self.device_map = {}  # {address: {...}}
+        self.device_clients = {}    # Address → connected BleakClient
         threading.Thread(target=self.scan_loop, daemon=True).start()
 
     def scan_loop(self):
@@ -44,20 +45,40 @@ class BLEDeviceScanner:
                     })
                     info["seen"] = now
 
-                    try:
-                        async with BleakClient(dev.address) as client:
-                            if client.is_connected:
-                                info["connected"] = True
-                                # Only update mode if connected!
-                                info["mode"] = await self.read_mode_async(client)
-                                info["readings"] += 1  # increment if connected/read successful
-                            else:
-                                info["connected"] = False
-                                # Do NOT change mode here
-                    except Exception as e:
-                        print(f"Connection failed to {dev.address}:", e)
+                    # Ensure we have a persistent BleakClient
+                    if dev.address not in self.device_clients:
+                        client = BleakClient(dev.address)
+                        try:
+                            await client.connect()
+                            print(f"Connected to {dev.address}")
+                            self.device_clients[dev.address] = client
+                        except Exception as e:
+                            print(f"Failed to connect {dev.address}:", e)
+                            continue
+                    else:
+                        client = self.device_clients[dev.address]
+
+                    if client.is_connected:
+                        info["connected"] = True
+                        info["mode"] = await self.read_mode_async(client)
+                        info["readings"] += 1
+                    else:
                         info["connected"] = False
-                        # Do NOT change mode here
+
+                    # try:
+                    #     async with BleakClient(dev.address) as client:
+                    #         if client.is_connected:
+                    #             info["connected"] = True
+                    #             # Only update mode if connected!
+                    #             info["mode"] = await self.read_mode_async(client)
+                    #             info["readings"] += 1  # increment if connected/read successful
+                    #         else:
+                    #             info["connected"] = False
+                    #             # Do NOT change mode here
+                    # except Exception as e:
+                    #     print(f"Connection failed to {dev.address}:", e)
+                    #     info["connected"] = False
+                    #     # Do NOT change mode here
 
             self.refresh_table()
             await asyncio.sleep(10)
@@ -106,10 +127,9 @@ class BLEDeviceScanner:
     def open_device_window(self, device):
         """Open a new window for reading/writing the device UUIDs."""
         win = tk.Toplevel(self.root)
-        win.title(f"Device: {device.name} ({device.address})")
-        tk.Label(win, text=f"Address: {device.address}").pack(pady=5)
-        tk.Label(win, text="(Here we add UUID reading/writing widgets from yesterday)").pack(pady=10)
-        # TODO: integrate yesterday's UUID read/write code here
+        # BLEParametersApp_NoConnect(win, self.device_clients[device['address']])  # pass
+        BLEParametersApp_NoConnect(win, self.device_clients[device.address])
+
 
 
 

@@ -91,7 +91,7 @@ class BLEParameterEditor:
 
 
 class BLEParametersApp:
-    def __init__(self, root):
+    def __init__(self, root, ADDRESS):
         self.root = root
         self.root.title("BLE Parameter Editor")
 
@@ -134,5 +134,5 @@ class BLEParametersApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = BLEParametersApp(root)
+    app = BLEParametersApp(root, ADDRESS)
     root.mainloop()
