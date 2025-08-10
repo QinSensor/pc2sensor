@@ -5,8 +5,8 @@ import tkinter as tk
 from tkinter import ttk
 from bleak import BleakScanner, BleakClient
 
+from a_sensor import ASensorParameterApp
 from sensor_map import UUID_MAP, MAPPINGS  # Ensure you have these mappings
-from a_sensor import BLEParametersApp_NoConnect
 
 class BLEDeviceScanner:
     def __init__(self, root):
@@ -114,7 +114,7 @@ class BLEDeviceScanner:
     def open_device_window(self, device):
         """Open a new window for reading/writing the device UUIDs."""
         win = tk.Toplevel(self.root)
-        BLEParametersApp_NoConnect(win, self.device_clients[device['address']])  # pass
+        ASensorParameterApp(win, self.device_clients[device['address']])  # pass
 
 
 if __name__ == "__main__":
