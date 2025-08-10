@@ -131,8 +131,10 @@ def restart_bluetooth_windows():
         print(f"Failed to restart Bluetooth service: {e}")
 
 if __name__ == "__main__":
+    print("Restarting bluetooth in PC...")
     restart_bluetooth_windows()
     time.sleep(3)  # give Bluetooth time to come back online
+
 
     root = tk.Tk()
     app = BLEDeviceScanner(root)
