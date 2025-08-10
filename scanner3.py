@@ -2,7 +2,7 @@ import asyncio
 import threading
 import time
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from bleak import BleakScanner, BleakClient
 import subprocess
 

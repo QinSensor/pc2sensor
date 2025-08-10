@@ -66,7 +66,7 @@ class BLEParameterEditor:
     def update_ui(self, label):
         self.selected_value.set(label)
         self.widget["state"] = "readonly" if self.mapping else "normal"
-        self.status.set("Connected")
+        self.status.set("Fetched")
 
     def on_value_selected(self, event=None):
         asyncio.run(self._async_write_value())
