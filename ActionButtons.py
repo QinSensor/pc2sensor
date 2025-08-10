@@ -14,9 +14,9 @@ class BLEActionButtons:
 
         # Button definitions: key in UUID_MAP, label, and send byte
         self.actions = [
-            ("shutdown_UUID", "Power Off Sensor", b"\x01"),
-            ("factory_reset_UUID", "Factory Reset", b"\x01"),
-            ("restart_UUID", "Restart Sensor", b"\x01")
+            ("shutdown", "Power Off Sensor", b"\x01"),
+            ("factory_reset", "Factory Reset", b"\x01"),
+            ("restart", "Restart Sensor", b"\x01")
         ]
 
         self._create_buttons()
