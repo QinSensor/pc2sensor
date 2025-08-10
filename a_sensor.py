@@ -88,7 +88,7 @@ class BLEParameterEditor:
             self.frame.after(0, lambda: self.status.set("Write failed"))
 
 
-class ASensorParameterApp:
+class ASensorParameterApp0:
     def __init__(self, root, client, address, name, is_connected):
         self.root = root
         self.root.title(address+ '('+ name+ ')')
@@ -159,6 +159,109 @@ class ASensorParameterApp:
                 self.conn_status.set("Disconnect failed")
             self.root.after(0, self.update_button_states)
         threading.Thread(target=do_disconnect, daemon=True).start()
+
+    def update_button_states(self):
+        """Enable/disable connect/disconnect buttons based on current status."""
+        status = self.conn_status.get().lower()
+        if status == "connected":
+            self.connect_btn["state"] = "disabled"
+            self.disconnect_btn["state"] = "normal"
+        else:
+            self.connect_btn["state"] = "normal"
+            self.disconnect_btn["state"] = "disabled"
+
+    def enable_editors(self):
+        for editor in self.editors.values():
+            editor.widget["state"] = "normal"
+            editor.status.set("Connected")
+            # Trigger read again after enabling
+            threading.Thread(target=editor.read_value, daemon=True).start()
+
+class ASensorParameterApp:
+    def __init__(self, root, parent, address, name, is_connected):
+        self.root = root
+        self.root.title(address+ '('+ name+ ')')
+        self.parent = parent  # Reference to BLEDeviceScanner
+        # self.client = client  # already connected BleakClient
+
+        self.editors = {}
+
+        self.main_frame = ttk.Frame(root)
+        self.main_frame.pack(padx=10, pady=10)
+
+        # ---- CONNECT/DISCONNECT BUTTONS ----
+        conn_frame = ttk.Frame(self.main_frame)
+        conn_frame.pack(fill="x", pady=5)
+
+        self.connect_btn = ttk.Button(conn_frame, text="Connect", command=self.connect_sensor)
+        self.connect_btn.pack(side="left", padx=5)
+
+        self.disconnect_btn = ttk.Button(conn_frame, text="Disconnect", command=self.disconnect_sensor)
+        self.disconnect_btn.pack(side="left", padx=5)
+
+        # Initialize connection status using is_connected
+        initial_status = "Connected" if is_connected else "Disconnected"
+        self.conn_status = tk.StringVar(value=initial_status)
+        ttk.Label(conn_frame, textvariable=self.conn_status, foreground="blue").pack(side="left", padx=10)
+
+        # Initial button states
+        self.update_button_states()
+
+        # Create editors but disable until connected
+        for param_key in UUID_MAP.keys():
+            editor = BLEParameterEditor(self.main_frame, self.client, param_key)
+            self.editors[param_key] = editor
+
+        # ---- DEVICE ACTION BUTTONS ----
+        self.buttons_frame = ttk.LabelFrame(self.main_frame, text="Device Actions")
+        self.buttons_frame.pack(fill="x", pady=10)
+
+        BLEActionButtons(self.buttons_frame, self.client)
+
+
+        self.enable_editors()
+
+    # ------------------------------
+    # Connection controls
+    # ------------------------------
+    def connect_sensor(self):
+        # Delegate to parent
+        self.parent.connect_device(self.address)
+        self.conn_status.set("Connected")
+        self.update_button_states()
+
+    def disconnect_sensor(self):
+        # Delegate to parent
+        self.parent.disconnect_device(self.address)
+        self.conn_status.set("Disconnected")
+        self.update_button_states()
+
+
+    # def connect_sensor(self):
+    #     def do_connect():
+    #         import asyncio
+    #         try:
+    #             asyncio.run(self.client.connect())
+    #             print(f"Connected to {self.address}")
+    #             self.conn_status.set("Connected")
+    #         except Exception as e:
+    #             print(f"Failed to connect: {e}")
+    #             self.conn_status.set("Connect failed")
+    #         self.root.after(0, self.update_button_states)
+    #     threading.Thread(target=do_connect, daemon=True).start()
+
+    # def disconnect_sensor(self):
+    #     def do_disconnect():
+    #         import asyncio
+    #         try:
+    #             asyncio.run(self.client.disconnect())
+    #             print(f"Disconnected from {self.address}")
+    #             self.conn_status.set("Disconnected")
+    #         except Exception as e:
+    #             print(f"Failed to disconnect: {e}")
+    #             self.conn_status.set("Disconnect failed")
+    #         self.root.after(0, self.update_button_states)
+    #     threading.Thread(target=do_disconnect, daemon=True).start()
 
     def update_button_states(self):
         """Enable/disable connect/disconnect buttons based on current status."""

@@ -72,6 +72,20 @@ class BLEDeviceScanner:
             self.refresh_table()
             await asyncio.sleep(10)
 
+    def connect_device(self, address):
+        client = self.device_clients.get(address)
+        if client and not client.is_connected:
+            import asyncio
+            asyncio.run(client.connect())
+            print(f"Connected to {address}")
+
+    def disconnect_device(self, address):
+        client = self.device_clients.get(address)
+        if client and client.is_connected:
+            import asyncio
+            asyncio.run(client.disconnect())
+            print(f"Disconnected from {address}")
+
     async def read_mode_async(self, client):
         """Async version for reading mode characteristic."""
         try:
