@@ -241,31 +241,7 @@ class ASensorParameterApp:
         self.update_button_states()
 
 
-    # def connect_sensor(self):
-    #     def do_connect():
-    #         import asyncio
-    #         try:
-    #             asyncio.run(self.client.connect())
-    #             print(f"Connected to {self.address}")
-    #             self.conn_status.set("Connected")
-    #         except Exception as e:
-    #             print(f"Failed to connect: {e}")
-    #             self.conn_status.set("Connect failed")
-    #         self.root.after(0, self.update_button_states)
-    #     threading.Thread(target=do_connect, daemon=True).start()
 
-    # def disconnect_sensor(self):
-    #     def do_disconnect():
-    #         import asyncio
-    #         try:
-    #             asyncio.run(self.client.disconnect())
-    #             print(f"Disconnected from {self.address}")
-    #             self.conn_status.set("Disconnected")
-    #         except Exception as e:
-    #             print(f"Failed to disconnect: {e}")
-    #             self.conn_status.set("Disconnect failed")
-    #         self.root.after(0, self.update_button_states)
-    #     threading.Thread(target=do_disconnect, daemon=True).start()
 
     def update_button_states(self):
         """Enable/disable connect/disconnect buttons based on current status."""
