@@ -99,12 +99,25 @@ class ASensorParameterApp:
         self.main_frame = ttk.Frame(root)
         self.main_frame.pack(padx=10, pady=10)
 
+        # ---- CONNECT/DISCONNECT BUTTONS ----
+        conn_frame = ttk.Frame(self.main_frame)
+        conn_frame.pack(fill="x", pady=5)
+
+        self.connect_btn = ttk.Button(conn_frame, text="Connect", command=self.connect_sensor)
+        self.connect_btn.pack(side="left", padx=5)
+
+        self.disconnect_btn = ttk.Button(conn_frame, text="Disconnect", command=self.disconnect_sensor)
+        self.disconnect_btn.pack(side="left", padx=5)
+
+        self.conn_status = tk.StringVar(value="Unknown")
+        ttk.Label(conn_frame, textvariable=self.conn_status, foreground="blue").pack(side="left", padx=10)
+
         # Create editors but disable until connected
         for param_key in UUID_MAP.keys():
             editor = BLEParameterEditor(self.main_frame, self.client, param_key)
             self.editors[param_key] = editor
 
-        # Frame for buttons
+        # ---- DEVICE ACTION BUTTONS ----
         self.buttons_frame = ttk.LabelFrame(self.main_frame, text="Device Actions")
         self.buttons_frame.pack(fill="x", pady=10)
 
@@ -112,6 +125,35 @@ class ASensorParameterApp:
 
 
         self.enable_editors()
+
+    # ------------------------------
+    # Connection controls
+    # ------------------------------
+    def connect_sensor(self):
+        def do_connect():
+            import asyncio
+            try:
+                asyncio.run(self.client.connect())
+                print(f"Connected to {self.address}")
+                self.conn_status.set("Connected")
+            except Exception as e:
+                print(f"Failed to connect: {e}")
+                self.conn_status.set("Connect failed")
+
+        threading.Thread(target=do_connect, daemon=True).start()
+
+    def disconnect_sensor(self):
+        def do_disconnect():
+            import asyncio
+            try:
+                asyncio.run(self.client.disconnect())
+                print(f"Disconnected from {self.address}")
+                self.conn_status.set("Disconnected")
+            except Exception as e:
+                print(f"Failed to disconnect: {e}")
+                self.conn_status.set("Disconnect failed")
+
+        threading.Thread(target=do_disconnect, daemon=True).start()
 
     def enable_editors(self):
         for editor in self.editors.values():
