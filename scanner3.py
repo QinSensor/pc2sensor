@@ -151,6 +151,7 @@ def restart_bluetooth_windows():
 if __name__ == "__main__":
     print("Restarting bluetooth in PC...")
     restart_bluetooth_windows()
+    time.sleep(3)  # give Bluetooth time to come back online
 
     root = tk.Tk()
     app = BLEDeviceScanner(root)
