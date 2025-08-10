@@ -4,6 +4,8 @@ import time
 import tkinter as tk
 from tkinter import ttk
 from bleak import BleakScanner, BleakClient
+import subprocess
+
 
 from a_sensor import ASensorParameterApp
 from sensor_map import UUID_MAP, MAPPINGS  # Ensure you have these mappings
@@ -117,10 +119,20 @@ class BLEDeviceScanner:
         address = device['address']
         name = device['name']
         ASensorParameterApp(win, self.device_clients[device['address']], address, name)  # pass
-        # ASensorParameterApp(win, self.device_clients[address], address, name)
 
+
+def restart_bluetooth_windows():
+    try:
+        subprocess.run(["powershell", "-Command", "Stop-Service bthserv"], check=True)
+        subprocess.run(["powershell", "-Command", "Start-Service bthserv"], check=True)
+        print("Bluetooth service restarted")
+    except Exception as e:
+        print(f"Failed to restart Bluetooth service: {e}")
 
 if __name__ == "__main__":
+    restart_bluetooth_windows()
+    time.sleep(3)  # give Bluetooth time to come back online
+
     root = tk.Tk()
     app = BLEDeviceScanner(root)
     root.mainloop()
