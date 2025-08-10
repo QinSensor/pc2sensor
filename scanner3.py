@@ -124,7 +124,8 @@ class BLEDeviceScanner:
 
 def restart_bluetooth_windows():
     try:
-        subprocess.run(["powershell", "-Command", "Stop-Service bthserv"], check=True)
+        subprocess.run(["powershell", "-Command", "Stop-Service bthserv -Force"], check=True)
+        time.sleep(3)  # give Bluetooth time to come back online
         subprocess.run(["powershell", "-Command", "Start-Service bthserv"], check=True)
         print("Bluetooth service restarted")
     except Exception as e:
@@ -133,8 +134,6 @@ def restart_bluetooth_windows():
 if __name__ == "__main__":
     print("Restarting bluetooth in PC...")
     restart_bluetooth_windows()
-    time.sleep(3)  # give Bluetooth time to come back online
-
 
     root = tk.Tk()
     app = BLEDeviceScanner(root)
