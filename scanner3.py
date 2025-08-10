@@ -114,7 +114,10 @@ class BLEDeviceScanner:
     def open_device_window(self, device):
         """Open a new window for reading/writing the device UUIDs."""
         win = tk.Toplevel(self.root)
-        ASensorParameterApp(win, self.device_clients[device['address']])  # pass
+        address = device['address']
+        name = device['name']
+        ASensorParameterApp(win, self.device_clients[device['address']], address, name)  # pass
+        # ASensorParameterApp(win, self.device_clients[address], address, name)
 
 
 if __name__ == "__main__":
