@@ -116,9 +116,10 @@ class BLEDeviceScanner:
     def open_device_window(self, device):
         """Open a new window for reading/writing the device UUIDs."""
         win = tk.Toplevel(self.root)
+        client = self.device_clients[device['address']]
         address = device['address']
         name = device['name']
-        ASensorParameterApp(win, self.device_clients[device['address']], address, name)  # pass
+        ASensorParameterApp(win, client, address, name, client.is_connected)  # pass
 
 
 def restart_bluetooth_windows():

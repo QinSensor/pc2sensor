@@ -89,7 +89,7 @@ class BLEParameterEditor:
 
 
 class ASensorParameterApp:
-    def __init__(self, root, client, address, name):
+    def __init__(self, root, client, address, name, is_connected):
         self.root = root
         self.root.title(address+ '('+ name+ ')')
         self.client = client  # already connected BleakClient
@@ -109,7 +109,9 @@ class ASensorParameterApp:
         self.disconnect_btn = ttk.Button(conn_frame, text="Disconnect", command=self.disconnect_sensor)
         self.disconnect_btn.pack(side="left", padx=5)
 
-        self.conn_status = tk.StringVar(value="Connect Status")
+        # Initialize connection status using is_connected
+        initial_status = "Connected" if is_connected else "Disconnected"
+        self.conn_status = tk.StringVar(value=initial_status)
         ttk.Label(conn_frame, textvariable=self.conn_status, foreground="blue").pack(side="left", padx=10)
 
         # Initial button states
