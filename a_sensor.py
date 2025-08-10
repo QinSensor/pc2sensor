@@ -183,6 +183,9 @@ class ASensorParameterApp:
         self.root.title(address+ '('+ name+ ')')
         self.parent = parent  # Reference to BLEDeviceScanner
         # self.client = client  # already connected BleakClient
+        self.client = self.parent.device_clients[address]  # or passed explicitly
+        self.address = address
+        self.name = name
 
         self.editors = {}
 
@@ -232,6 +235,7 @@ class ASensorParameterApp:
 
     def disconnect_sensor(self):
         # Delegate to parent
+
         self.parent.disconnect_device(self.address)
         self.conn_status.set("Disconnected")
         self.update_button_states()
