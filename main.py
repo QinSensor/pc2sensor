@@ -1,4 +1,4 @@
-# for 1 specific sensor (Finished Auguest 9)
+
 
 import asyncio
 import tkinter as tk
