@@ -21,12 +21,6 @@ class BLEActionButtons:
 
         self._create_buttons_in_row()
 
-    # def _create_buttons(self):
-    #     """Create one button per BLE action."""
-    #     for uuid_key, label, data_bytes in self.actions:
-    #         btn = ttk.Button(self.parent, text=label,
-    #                          command=lambda k=uuid_key, d=data_bytes: self._send_command(k, d))
-    #         btn.pack(fill="x", pady=3)
     def _create_buttons_in_row(self):
         """Create action buttons in a single horizontal row using grid."""
         for col_index, (uuid_key, label, data_bytes) in enumerate(self.actions):

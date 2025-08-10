@@ -91,7 +91,7 @@ class BLEParameterEditor:
 class ASensorParameterApp:
     def __init__(self, root, client, address, name):
         self.root = root
-        self.root.title(address, '(', name, ')')
+        self.root.title(address+ '('+ name+ ')')
         self.client = client  # already connected BleakClient
 
         self.editors = {}
