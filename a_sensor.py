@@ -157,7 +157,7 @@ class ASensorParameterApp:
             except Exception as e:
                 print(f"Failed to disconnect: {e}")
                 self.conn_status.set("Disconnect failed")
-        self.root.after(0, self.update_button_states)
+            self.root.after(0, self.update_button_states)
         threading.Thread(target=do_disconnect, daemon=True).start()
 
     def update_button_states(self):
