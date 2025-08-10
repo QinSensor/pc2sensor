@@ -19,7 +19,7 @@ class BLEActionButtons:
             ("restart", "Restart Sensor", b"\x01")
         ]
 
-        self._create_buttons()
+        self._create_buttons_in_row()
 
     # def _create_buttons(self):
     #     """Create one button per BLE action."""
