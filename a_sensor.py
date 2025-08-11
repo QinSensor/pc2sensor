@@ -29,7 +29,7 @@ class BLEParameterEditor:
     def __init__(self, parent, client, param_key):
         self.client = client
         self.param_key = param_key
-        self.uuid, _ = UUID_MAP[param_key]
+        self.uuid, self.byte_size = UUID_MAP[param_key]
         self.mapping = MAPPINGS.get(param_key, None)
 
         self.frame = ttk.Frame(parent)
