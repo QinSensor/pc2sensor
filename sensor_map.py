@@ -10,14 +10,14 @@ UUID_MAP_BUTTON = {
 
 
 UUID_MAP = {
-    'sample_rate': "1c930023-d459-11e7-9296-b8e856369374",  # in map
-    'gain': "1c930022-d459-11e7-9296-b8e856369374",         # in map
-    'mode': "1c930031-d459-11e7-9296-b8e856369374",         # in map
-    'holdoff_interval': "1c93003a-d459-11e7-9296-b8e856369374",  # numeric
-    'wakeup_interval': "1c930036-d459-11e7-9296-b8e856369374",   # numeric
-    'trace_len': "1c930024-d459-11e7-9296-b8e856369374",        # in map
-    'axes': "1c93002b-d459-11e7-9296-b8e856369374",              # in map
-    'trigger_delay': "1c930025-d459-11e7-9296-b8e856369374",
+    'sample_rate':       ("1c930023-d459-11e7-9296-b8e856369374", 1),  # in map
+    'gain':              ("1c930022-d459-11e7-9296-b8e856369374", 1),  # in map
+    'mode':              ("1c930031-d459-11e7-9296-b8e856369374", 1),  # in map
+    'holdoff_interval':  ("1c93003a-d459-11e7-9296-b8e856369374", 2),  # numeric
+    'wakeup_interval':   ("1c930036-d459-11e7-9296-b8e856369374", 2),  # numeric, 3 bytes
+    'trace_len':         ("1c930024-d459-11e7-9296-b8e856369374", 1),  # in map
+    'axes':              ("1c93002b-d459-11e7-9296-b8e856369374", 1),  # in map
+    'trigger_delay':     ("1c930025-d459-11e7-9296-b8e856369374", 2)   # example size
 
     # 'window': "1c930027-d459-11e7-9296-b8e856369374",
     #

@@ -96,19 +96,26 @@ class BLEParameterEditor:
     async def _async_write_value(self):
         try:
             label = self.selected_value.get()
+            self.uuid, byte_size = UUID_MAP[self.param_key]
+
             if self.mapping:
                 raw_val = next(val for val, lbl in self.mapping if lbl == label)
             else:
                 raw_val = int(label)
 
-            data = raw_val.to_bytes(1, byteorder="little")  # Adjust byte size if needed
+            data = raw_val.to_bytes(byte_size, byteorder="little")  # Adjust byte size if needed
             await self.client.write_gatt_char(self.uuid, data)
-            self.frame.after(0, lambda: self.status.set(f"Wrote {label}"))
-            print(f"Wrote {raw_val} ({label}) to {self.param_key}")
+
+            # Show human decimal label (from UI) and raw bytes sent (in hex)
+            self.frame.after(0, lambda: self.status.set(f"Wrote {label} (bytes: {data.hex()})"))
+            print(f"Wrote {raw_val} ({label}) to {self.param_key} as bytes: {data.hex()}")
+            # self.frame.after(0, lambda: self.status.set(f"Wrote {label}"))
+
+            # Debug log
+            print(f"Wrote {raw_val} ({label}) to {self.param_key} ({self.uuid}, {byte_size} bytes)")
         except Exception as e:
             print(f"Failed to write {self.param_key}:", e)
             self.frame.after(0, lambda: self.status.set("Write failed"))
-
 
 class ASensorParameterApp0:
     def __init__(self, root, client, address, name, is_connected):
