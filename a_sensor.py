@@ -28,12 +28,13 @@ async def compute_trigger_delay(client, raw_val):
 
 
 class BLEParameterEditor:
-    def __init__(self, parent, client, param_key):
+    def __init__(self, parent, client, param_key, param_raw_values):
         self.client = client
         self.param_key = param_key
+        self.param_raw_values = param_raw_values
         self.uuid, self.byte_size = UUID_MAP[param_key]
         self.mapping = MAPPINGS.get(param_key, None)
-        self.param_raw_values = {}
+
 
         self.frame = ttk.Frame(parent)
         self.frame.pack(fill='x', pady=5)
@@ -89,6 +90,7 @@ class BLEParameterEditor:
             # Update GUI in main thread
             self.frame.after(0, lambda: self.update_ui(label))
         except Exception as e:
+            print(self.param_raw_values)
             print(f"Failed to read {self.param_key}:", e)
             self.frame.after(0, lambda: self.status.set("Read failed"))
 
@@ -135,6 +137,7 @@ class ASensorParameterApp:
         self.client = self.parent.device_clients[address]  # or passed explicitly
         self.address = address
         self.name = name
+        self.param_raw_values = {}
 
         self.editors = {}
 
@@ -161,7 +164,7 @@ class ASensorParameterApp:
 
         # Create editors but disable until connected
         for param_key in UUID_MAP.keys():
-            editor = BLEParameterEditor(self.main_frame, self.client, param_key)
+            editor = BLEParameterEditor(self.main_frame, self.client, param_key, self.param_raw_values)
             self.editors[param_key] = editor
 
         self.commit_button = tk.Button(self.main_frame, text="SAVE", command=self.on_commit_button_click)
