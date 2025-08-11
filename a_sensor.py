@@ -33,6 +33,7 @@ class BLEParameterEditor:
         self.param_key = param_key
         self.uuid, self.byte_size = UUID_MAP[param_key]
         self.mapping = MAPPINGS.get(param_key, None)
+        self.param_raw_values = {}
 
         self.frame = ttk.Frame(parent)
         self.frame.pack(fill='x', pady=5)
@@ -74,17 +75,16 @@ class BLEParameterEditor:
             value_bytes = await self.client.read_gatt_char(self.uuid)
             raw_val = int.from_bytes(value_bytes, byteorder="little")
 
-            if self.param_key == "trigger_delay":
-            # if "mode" == "trigger_delay":
-                label = await compute_trigger_delay(self.client, raw_val)
+            self.param_raw_values[self.param_key] = raw_val
+
+            if self.mapping:
+                value_dict = dict(self.mapping)
+                label = value_dict.get(raw_val, "Unknown")
             else:
-
-
-                if self.mapping:
-                    value_dict = dict(self.mapping)
-                    label = value_dict.get(raw_val, "Unknown")
-                else:
-                    label = str(raw_val)
+                label = str(raw_val)
+            if self.param_key == "trigger_delay":
+                label = self.param_raw_values["trigger_delay"]/self.param_raw_values["trace_len"]*100
+                # label = await compute_trigger_delay(self.client, raw_val)
 
             # Update GUI in main thread
             self.frame.after(0, lambda: self.update_ui(label))
