@@ -12,8 +12,9 @@ async def compute_trigger_delay(client, raw_val):
     Computes trigger_delay % from raw_val and trace_len.
     Returns string as 'percent' (integer) or raw_val as string if unavailable.
     """
-    trace_len_uuid = UUID_MAP.get("trace_len")
-    if trace_len_uuid:
+    trace_len_entry = UUID_MAP.get("trace_len")
+    if trace_len_entry:
+        trace_len_uuid, _ = trace_len_entry
         try:
             trace_len_bytes = await client.read_gatt_char(trace_len_uuid)
             trace_len = int.from_bytes(trace_len_bytes, byteorder="little")
