@@ -29,7 +29,7 @@ class BLEParameterEditor:
     def __init__(self, parent, client, param_key):
         self.client = client
         self.param_key = param_key
-        self.uuid = UUID_MAP[param_key]
+        self.uuid, _ = UUID_MAP[param_key]
         self.mapping = MAPPINGS.get(param_key, None)
 
         self.frame = ttk.Frame(parent)
@@ -152,7 +152,7 @@ class ASensorParameterApp0:
         self.update_button_states()
 
         # Create editors but disable until connected
-        for param_key in UUID_MAP.keys():
+        for param_key, _ in UUID_MAP.keys():
             editor = BLEParameterEditor(self.main_frame, self.client, param_key)
             self.editors[param_key] = editor
 
@@ -245,7 +245,7 @@ class ASensorParameterApp:
         self.update_button_states()
 
         # Create editors but disable until connected
-        for param_key in UUID_MAP.keys():
+        for param_key, _ in UUID_MAP.keys():
             editor = BLEParameterEditor(self.main_frame, self.client, param_key)
             self.editors[param_key] = editor
 
