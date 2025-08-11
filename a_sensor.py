@@ -76,6 +76,7 @@ class BLEParameterEditor:
             raw_val = int.from_bytes(value_bytes, byteorder="little")
 
             self.param_raw_values[self.param_key] = raw_val
+            print("Debug: all read:", self.param_raw_values)
 
             if self.mapping:
                 value_dict = dict(self.mapping)
@@ -89,6 +90,7 @@ class BLEParameterEditor:
             # Update GUI in main thread
             self.frame.after(0, lambda: self.update_ui(label))
         except Exception as e:
+            print("all read:", self.param_raw_values)
             print(f"Failed to read {self.param_key}:", e)
             self.frame.after(0, lambda: self.status.set("Read failed"))
 
@@ -163,6 +165,7 @@ class ASensorParameterApp:
         for param_key in UUID_MAP.keys():
             editor = BLEParameterEditor(self.main_frame, self.client, param_key)
             self.editors[param_key] = editor
+            print("Debug :", self.editors)
 
         self.commit_button = tk.Button(self.main_frame, text="SAVE", command=self.on_commit_button_click)
         self.commit_button.pack(pady=20)
