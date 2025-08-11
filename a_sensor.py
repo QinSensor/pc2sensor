@@ -4,22 +4,24 @@ from tkinter import ttk
 import threading
 
 from ActionButtons import BLEActionButtons
-from sensor_map import UUID_MAP, MAPPINGS, UUID_MAP_BUTTON
+from sensor_map import UUID_MAP, MAPPINGS, UUID_MAP_BUTTON, PARAM_LABELS
 
 
 class BLEParameterEditor:
-    def __init__(self, parent, client, param_key, param_raw_values):
+    def __init__(self, parent, client, param_key, param_raw_values, param_final_values, label=None):
         self.client = client
         self.param_key = param_key
         self.param_raw_values = param_raw_values
+        self.param_final_values = param_final_values
         self.uuid, self.byte_size = UUID_MAP[param_key]
         self.mapping = MAPPINGS.get(param_key, None)
 
+        display_label = label if label else f"{param_key.replace('_', ' ').title()}"
 
         self.frame = ttk.Frame(parent)
         self.frame.pack(fill='x', pady=5)
 
-        ttk.Label(self.frame, text=f"{param_key.replace('_', ' ').title()}").pack(side='left', padx=5)
+        ttk.Label(self.frame, text=display_label).pack(side='left', padx=5)
 
         self.status = tk.StringVar(value="Waiting")
         ttk.Label(self.frame, textvariable=self.status, foreground="blue").pack(side='right', padx=5)
@@ -65,7 +67,8 @@ class BLEParameterEditor:
                 label = str(raw_val)
             if self.param_key == "trigger_delay":
 
-                label = self.param_raw_values["trigger_delay"]/self.param_raw_values["trace_len"]*100
+                label = int(self.param_final_values["trigger_delay"])*100/int(self.param_final_values["trace_len"])
+            self.param_final_values[self.param_key] = label
 
             # Update GUI in main thread
             self.frame.after(0, lambda: self.update_ui(label))
@@ -118,6 +121,7 @@ class ASensorParameterApp:
         self.address = address
         self.name = name
         self.param_raw_values = {}
+        self.param_final_values = {}
 
         self.editors = {}
 
@@ -144,8 +148,10 @@ class ASensorParameterApp:
 
         # Create editors but disable until connected
         for param_key in UUID_MAP.keys():
-            editor = BLEParameterEditor(self.main_frame, self.client, param_key, self.param_raw_values)
+            label_text = PARAM_LABELS.get(param_key, param_key)
+            editor = BLEParameterEditor(self.main_frame, self.client, param_key, self.param_raw_values, self.param_final_values, label=label_text)
             self.editors[param_key] = editor
+            # editor = BLEParameterEditor(self.main_frame, self.client, param_key, self.param_raw_values, self.param_final_values)
 
         print(self.param_raw_values)
 

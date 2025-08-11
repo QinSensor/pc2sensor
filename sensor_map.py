@@ -9,6 +9,16 @@ UUID_MAP_BUTTON = {
     # ... Add as needed ...
 }
 
+PARAM_LABELS = {
+    "sample_rate": "Sample Rate (Hz)",
+    "gain": "Gain",
+    "trigger_delay": "Trigger Delay (%)",
+    "trace_len": "Trace Length (samples)",
+    "axes": "Axes",
+    "mode": "Operating Mode",
+    "holdoff_interval": "Holdoff Interval (s)",
+    "wakeup_interval": "Wakeup Interval (s)"
+}
 
 
 UUID_MAP = {
