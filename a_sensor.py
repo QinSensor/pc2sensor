@@ -172,7 +172,7 @@ class ASensorParameterApp:
             editor = BLEParameterEditor(self.main_frame, self.client, param_key)
             self.editors[param_key] = editor
 
-        self.commit_button = tk.Button(root, text="Commit Changes", command=self.on_commit_button_click)
+        self.commit_button = tk.Button(root, text="SAVE", command=self.on_commit_button_click)
         self.commit_button.pack(pady=20)
 
         # ---- DEVICE ACTION BUTTONS ----
