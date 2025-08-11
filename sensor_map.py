@@ -3,6 +3,8 @@ UUID_MAP_BUTTON = {
     'factory_reset': "1c930041-d459-11e7-9296-b8e856369374",
     'restart': "1c930042-d459-11e7-9296-b8e856369374",
 
+    'release': "1c930030-d459-11e7-9296-b8e856369374",
+
 
     # ... Add as needed ...
 }
@@ -17,7 +19,8 @@ UUID_MAP = {
     'wakeup_interval':   ("1c930036-d459-11e7-9296-b8e856369374", 2),  # numeric, 3 bytes
     'trace_len':         ("1c930024-d459-11e7-9296-b8e856369374", 1),  # in map
     'axes':              ("1c93002b-d459-11e7-9296-b8e856369374", 1),  # in map
-    'trigger_delay':     ("1c930025-d459-11e7-9296-b8e856369374", 2)   # example size
+    'trigger_delay':     ("1c930025-d459-11e7-9296-b8e856369374", 2),   #
+    'calibration':       ("1c930029-d459-11e7-9296-b8e856369374", 2)    #
 
     # 'window': "1c930027-d459-11e7-9296-b8e856369374",
     #
