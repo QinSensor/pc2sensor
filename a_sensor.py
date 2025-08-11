@@ -152,7 +152,7 @@ class ASensorParameterApp0:
         self.update_button_states()
 
         # Create editors but disable until connected
-        for param_key, _ in UUID_MAP.keys():
+        for param_key in UUID_MAP.keys():
             editor = BLEParameterEditor(self.main_frame, self.client, param_key)
             self.editors[param_key] = editor
 
@@ -245,7 +245,7 @@ class ASensorParameterApp:
         self.update_button_states()
 
         # Create editors but disable until connected
-        for param_key, _ in UUID_MAP.keys():
+        for param_key in UUID_MAP.keys():
             editor = BLEParameterEditor(self.main_frame, self.client, param_key)
             self.editors[param_key] = editor
 
