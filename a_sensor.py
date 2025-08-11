@@ -7,6 +7,23 @@ from ActionButtons import BLEActionButtons
 from sensor_map import UUID_MAP, MAPPINGS
 
 
+async def compute_trigger_delay(client, raw_val):
+    """
+    Computes trigger_delay % from raw_val and trace_len.
+    Returns string as 'percent' (integer) or raw_val as string if unavailable.
+    """
+    trace_len_uuid = UUID_MAP.get("trace_len")
+    if trace_len_uuid:
+        try:
+            trace_len_bytes = await client.read_gatt_char(trace_len_uuid)
+            trace_len = int.from_bytes(trace_len_bytes, byteorder="little")
+            if trace_len:
+                percent = int(raw_val * 100 / trace_len)  # integer division
+                return f"{percent}"
+        except Exception as er:
+            print(f"Failed to read trace_len for trigger_delay: {er}")
+    return str(raw_val)
+
 class BLEParameterEditor:
     def __init__(self, parent, client, param_key):
         self.client = client
@@ -51,11 +68,16 @@ class BLEParameterEditor:
             value_bytes = await self.client.read_gatt_char(self.uuid)
             raw_val = int.from_bytes(value_bytes, byteorder="little")
 
-            if self.mapping:
-                value_dict = dict(self.mapping)
-                label = value_dict.get(raw_val, "Unknown")
+            if "mode" == "trigger_delay":
+                label = await compute_trigger_delay(self.client, raw_val)
             else:
-                label = str(raw_val)
+
+
+                if self.mapping:
+                    value_dict = dict(self.mapping)
+                    label = value_dict.get(raw_val, "Unknown")
+                else:
+                    label = str(raw_val)
 
             # Update GUI in main thread
             self.frame.after(0, lambda: self.update_ui(label))
