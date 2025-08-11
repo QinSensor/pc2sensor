@@ -12,7 +12,7 @@ UUID_MAP_BUTTON = {
 PARAM_LABELS = {
     "sample_rate": "Sample Rate (Hz)",
     "gain": "Gain",
-    "trigger_delay": "Trigger Delay (%)",
+    "trigger_delay": "Trigger Delay (%TBD)",
     "trace_len": "Trace Length (samples)",
     "axes": "Axes",
     "mode": "Operating Mode",
@@ -41,7 +41,6 @@ UUID_MAP = {
 }
 
 MAPPINGS = {
-
     'axes': [
         (1, "1"),
         (3, "3")

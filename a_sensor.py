@@ -65,10 +65,11 @@ class BLEParameterEditor:
                 label = value_dict.get(raw_val, "Unknown")
             else:
                 label = str(raw_val)
-            if self.param_key == "trigger_delay":
-
-                label = int(self.param_final_values["trigger_delay"])*100/int(self.param_final_values["trace_len"])
             self.param_final_values[self.param_key] = label
+            print("Debug: final:", self.param_final_values)
+            if self.param_key == "trigger_delay":
+                label = int(self.param_final_values["trigger_delay"])   # TODO ask Jim about its definiction
+
 
             # Update GUI in main thread
             self.frame.after(0, lambda: self.update_ui(label))
@@ -154,6 +155,7 @@ class ASensorParameterApp:
             # editor = BLEParameterEditor(self.main_frame, self.client, param_key, self.param_raw_values, self.param_final_values)
 
         print(self.param_raw_values)
+        print("Debug: final values: ", self.param_final_values)
 
         self.commit_button = tk.Button(self.main_frame, text="SAVE", command=self.on_commit_button_click)
         self.commit_button.pack(pady=20)
