@@ -65,10 +65,14 @@ class BLEParameterEditor:
 
     async def _async_read_value(self):
         try:
+            uuid_str, _ = UUID_MAP[self.param_key]
+            self.uuid = uuid_str
+
             value_bytes = await self.client.read_gatt_char(self.uuid)
             raw_val = int.from_bytes(value_bytes, byteorder="little")
 
-            if "mode" == "trigger_delay":
+            if self.param_key == "trigger_delay":
+            # if "mode" == "trigger_delay":
                 label = await compute_trigger_delay(self.client, raw_val)
             else:
 
