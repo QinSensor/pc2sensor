@@ -51,7 +51,7 @@ class BLEDeviceScanner:
                         "readings": 0,  # starts at 0
                         "seen": now
                     })
-                    info["seen"] = now
+                    info["seen"] = now    # time
 
                     # Ensure we have a persistent BleakClient
                     if dev.address not in self.device_clients:
@@ -93,7 +93,7 @@ class BLEDeviceScanner:
     async def read_mode_async(self, client):
         """Async version for reading mode characteristic."""
         try:
-            uuid = UUID_MAP["mode"]
+            uuid, byte_size = UUID_MAP["mode"]
             value_bytes = await client.read_gatt_char(uuid)
             raw_val = int.from_bytes(value_bytes, byteorder="little")
 
