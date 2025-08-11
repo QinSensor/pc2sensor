@@ -214,12 +214,3 @@ async def commit_changes(client):
         print("Commit successful")
     except Exception as e:
         print("Commit failed:", e)
-# async def commit_changes(client):
-#     # Write any byte, e.g., 0x01
-#     data = bytes([0x01])  # 1 byte of data
-#     COMMIT_UUID = UUID_MAP_BUTTON.get("commit")
-#     try:
-#         await client.write_gatt_char(COMMIT_UUID, data)
-#         print("Commit command sent successfully.")
-#     except Exception as e:
-#         print(f"Failed to write commit command: {e}")
