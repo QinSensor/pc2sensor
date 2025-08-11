@@ -25,15 +25,7 @@ async def compute_trigger_delay(client, raw_val):
             print(f"Failed to read trace_len for trigger_delay: {er}")
     return str(raw_val)
 
-async def commit_changes(client):
-    # Write any byte, e.g., 0x01
-    data = bytes([0x01])  # 1 byte of data
-    COMMIT_UUID = UUID_MAP_BUTTON.get("commit")
-    try:
-        await client.write_gatt_char(COMMIT_UUID, data)
-        print("Commit command sent successfully.")
-    except Exception as e:
-        print(f"Failed to write commit command: {e}")
+
 
 class BLEParameterEditor:
     def __init__(self, parent, client, param_key):
@@ -172,7 +164,7 @@ class ASensorParameterApp:
             editor = BLEParameterEditor(self.main_frame, self.client, param_key)
             self.editors[param_key] = editor
 
-        self.commit_button = tk.Button(root, text="SAVE", command=self.on_commit_button_click)
+        self.commit_button = tk.Button(self.main_frame, text="SAVE", command=self.on_commit_button_click)
         self.commit_button.pack(pady=20)
 
         # ---- DEVICE ACTION BUTTONS ----
@@ -184,9 +176,6 @@ class ASensorParameterApp:
 
         self.enable_editors()
 
-    # ------------------------------
-    # Connection controls
-    # ------------------------------
     def connect_sensor(self):
         # Delegate to parent
         self.parent.connect_device(self.address)
@@ -201,8 +190,15 @@ class ASensorParameterApp:
         self.update_button_states()
 
     def on_commit_button_click(self):
+
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(commit_changes(self.client))
+        finally:
+            loop.close()
         # Run async task from sync button callback
-        asyncio.create_task(commit_changes(self.client))
+        # asyncio.create_task(commit_changes(self.client))
 
     def update_button_states(self):
         """Enable/disable connect/disconnect buttons based on current status."""
@@ -221,3 +217,21 @@ class ASensorParameterApp:
             # Trigger read again after enabling
             threading.Thread(target=editor.read_value, daemon=True).start()
 
+
+# async def commit_changes(client):
+#     COMMIT_UUID = "1c930030-d459-11e7-9296-b8e856369374"
+#     data = bytes([0x01])
+#     try:
+#         await client.write_gatt_char(COMMIT_UUID, data)
+#         print("Commit successful")
+#     except Exception as e:
+#         print("Commit failed:", e)
+async def commit_changes(client):
+    # Write any byte, e.g., 0x01
+    data = bytes([0x01])  # 1 byte of data
+    COMMIT_UUID = UUID_MAP_BUTTON.get("commit")
+    try:
+        await client.write_gatt_char(COMMIT_UUID, data)
+        print("Commit command sent successfully.")
+    except Exception as e:
+        print(f"Failed to write commit command: {e}")
