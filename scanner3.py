@@ -10,6 +10,25 @@ import subprocess
 from a_sensor import ASensorParameterApp
 from sensor_map import UUID_MAP, MAPPINGS  # Ensure you have these mappings
 
+
+async def compute_trigger_delay(client, raw_val):
+    """
+    Computes trigger_delay % from raw_val and trace_len.
+    Returns string as 'percent' (integer) or raw_val as string if unavailable.
+    """
+    trace_len_uuid = UUID_MAP.get("trace_len")
+    if trace_len_uuid:
+        try:
+            trace_len_bytes = await client.read_gatt_char(trace_len_uuid)
+            trace_len = int.from_bytes(trace_len_bytes, byteorder="little")
+            if trace_len:
+                percent = int(raw_val * 100 / trace_len)  # integer division
+                return f"{percent}"
+        except Exception as er:
+            print(f"Failed to read trace_len for trigger_delay: {er}")
+    return str(raw_val)
+
+
 class BLEDeviceScanner:
     def __init__(self, root):
         self.root = root
@@ -92,13 +111,18 @@ class BLEDeviceScanner:
             uuid = UUID_MAP["mode"]
             value_bytes = await client.read_gatt_char(uuid)
             raw_val = int.from_bytes(value_bytes, byteorder="little")
-            mapping = MAPPINGS.get("mode", None)
-            if mapping:
-                return dict(mapping).get(raw_val, f"Unknown ({raw_val})")
-            return str(raw_val)
+            if "mode" == "trigger_delay":
+                return await compute_trigger_delay(client, raw_val)
+            else:
+
+
+                mapping = MAPPINGS.get("mode", None)
+                if mapping:
+                    return dict(mapping).get(raw_val, f"Unknown ({raw_val})")
+                return str(raw_val)
         except Exception as e:
             print("Failed to read mode:", e)
-            return "Error"
+            return f"Error: {e}"
 
     def refresh_table(self):
         self.tree.delete(*self.tree.get_children())
