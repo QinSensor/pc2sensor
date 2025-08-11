@@ -7,26 +7,6 @@ from ActionButtons import BLEActionButtons
 from sensor_map import UUID_MAP, MAPPINGS, UUID_MAP_BUTTON
 
 
-async def compute_trigger_delay(client, raw_val):
-    """
-    Computes trigger_delay % from raw_val and trace_len.
-    Returns string as 'percent' (integer) or raw_val as string if unavailable.
-    """
-    trace_len_entry = UUID_MAP.get("trace_len")
-    if trace_len_entry:
-        trace_len_uuid, _ = trace_len_entry
-        try:
-            trace_len_bytes = await client.read_gatt_char(trace_len_uuid)
-            trace_len = int.from_bytes(trace_len_bytes, byteorder="little")
-            if trace_len:
-                percent = int(raw_val * 100 / trace_len)  # integer division
-                return f"{percent}"
-        except Exception as er:
-            print(f"Failed to read trace_len for trigger_delay: {er}")
-    return str(raw_val)
-
-
-
 class BLEParameterEditor:
     def __init__(self, parent, client, param_key, param_raw_values):
         self.client = client
@@ -84,8 +64,8 @@ class BLEParameterEditor:
             else:
                 label = str(raw_val)
             if self.param_key == "trigger_delay":
+
                 label = self.param_raw_values["trigger_delay"]/self.param_raw_values["trace_len"]*100
-                # label = await compute_trigger_delay(self.client, raw_val)
 
             # Update GUI in main thread
             self.frame.after(0, lambda: self.update_ui(label))
@@ -167,6 +147,8 @@ class ASensorParameterApp:
             editor = BLEParameterEditor(self.main_frame, self.client, param_key, self.param_raw_values)
             self.editors[param_key] = editor
 
+        print(self.param_raw_values)
+
         self.commit_button = tk.Button(self.main_frame, text="SAVE", command=self.on_commit_button_click)
         self.commit_button.pack(pady=20)
 
@@ -193,15 +175,12 @@ class ASensorParameterApp:
         self.update_button_states()
 
     def on_commit_button_click(self):
-
         try:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             loop.run_until_complete(commit_changes(self.client))
         finally:
             loop.close()
-        # Run async task from sync button callback
-        # asyncio.create_task(commit_changes(self.client))
 
     def update_button_states(self):
         """Enable/disable connect/disconnect buttons based on current status."""
@@ -221,20 +200,20 @@ class ASensorParameterApp:
             threading.Thread(target=editor.read_value, daemon=True).start()
 
 
-# async def commit_changes(client):
-#     COMMIT_UUID = "1c930030-d459-11e7-9296-b8e856369374"
-#     data = bytes([0x01])
-#     try:
-#         await client.write_gatt_char(COMMIT_UUID, data)
-#         print("Commit successful")
-#     except Exception as e:
-#         print("Commit failed:", e)
 async def commit_changes(client):
-    # Write any byte, e.g., 0x01
-    data = bytes([0x01])  # 1 byte of data
-    COMMIT_UUID = UUID_MAP_BUTTON.get("commit")
+    COMMIT_UUID = "1c930030-d459-11e7-9296-b8e856369374"
+    data = bytes([0x01])
     try:
         await client.write_gatt_char(COMMIT_UUID, data)
-        print("Commit command sent successfully.")
+        print("Commit successful")
     except Exception as e:
-        print(f"Failed to write commit command: {e}")
+        print("Commit failed:", e)
+# async def commit_changes(client):
+#     # Write any byte, e.g., 0x01
+#     data = bytes([0x01])  # 1 byte of data
+#     COMMIT_UUID = UUID_MAP_BUTTON.get("commit")
+#     try:
+#         await client.write_gatt_char(COMMIT_UUID, data)
+#         print("Commit command sent successfully.")
+#     except Exception as e:
+#         print(f"Failed to write commit command: {e}")
