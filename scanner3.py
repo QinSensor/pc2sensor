@@ -5,17 +5,13 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from bleak import BleakScanner, BleakClient
 import subprocess
-
-
 from a_sensor import ASensorParameterApp
 from sensor_map import UUID_MAP, MAPPINGS  # Ensure you have these mappings
 
 
-
-
-
 class BLEDeviceScanner:
-    def __init__(self, root):
+    def __init__(self, root, loop):
+        self.loop = loop
         self.root = root
         self.root.title("BluVib Devices")
 
@@ -141,7 +137,7 @@ class BLEDeviceScanner:
         if not client:
             tk.messagebox.showerror("Error", f"No connected client found for {address}")
             return
-        ASensorParameterApp(win, self, address, name, client.is_connected)  # pass
+        ASensorParameterApp(win, self, address, name, client, self.loop)  # pass
 
 
 def restart_bluetooth_windows():
@@ -153,11 +149,19 @@ def restart_bluetooth_windows():
     except Exception as e:
         print(f"Failed to restart Bluetooth service: {e}")
 
-if __name__ == "__main__":
-    # print("Restarting bluetooth in PC...")
-    # restart_bluetooth_windows()
-    # time.sleep(3)  # give Bluetooth time to come back online
 
+def start_loop(loop):
+    asyncio.set_event_loop(loop)
+    loop.run_forever()
+
+
+if __name__ == "__main__":
     root = tk.Tk()
-    app = BLEDeviceScanner(root)
+
+    loop = asyncio.new_event_loop()
+    # Start the event loop in a new thread
+    loop_thread = threading.Thread(target=start_loop, args=(loop,), daemon=True)
+    loop_thread.start()
+
+    app = BLEDeviceScanner(root, loop)
     root.mainloop()
