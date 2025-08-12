@@ -10,11 +10,6 @@ calb_uuid, calb_size = UUID_DATA["calibration"]
 
 
 def update_plot_display(app):
-    """
-    Called repeatedly by Tkinter root.after.
-    Updates time, acceleration, velocity data arrays and redraws plots.
-    """
-
     # Limit data size to avoid memory bloat
     max_points = 200
     if len(app.time_data) > max_points:
@@ -45,59 +40,99 @@ def update_plot_display(app):
 
 
 def update_plots(ax_acc_time, ax_acc_freq, ax_vel_time, ax_vel_freq, time_data, acc_data, vel_data, canvas):
-    # Example placeholder implementation: replace with your own plot drawing logic
-
+    # --- Acceleration vs Time ---
     ax_acc_time.clear()
     ax_acc_time.plot(time_data, acc_data)
     ax_acc_time.set_title("Acceleration vs Time")
 
-    # Similarly update freq domain and velocity plots here...
+    # # --- Acceleration Frequency Domain ---
+    # ax_acc_freq.clear()
+    # if len(acc_data) > 1:
+    #     dt = np.mean(np.diff(time_data))   # TODO ask Jim
+    #     # dt = time_data[1] - time_data[0]
+    #     if dt == 0:
+    #         dt = 1e-6  # tiny value to avoid zero division
+    #     freqs = np.fft.rfftfreq(len(acc_data), d=dt)
+    #     fft_vals = np.abs(np.fft.rfft(acc_data))
+    #     ax_acc_freq.plot(freqs, fft_vals)
+    # ax_acc_freq.set_title("Acceleration Frequency Spectrum")
+
+    # --- Velocity vs Time ---
+    ax_vel_time.clear()
+    ax_vel_time.plot(time_data, vel_data)
+    ax_vel_time.set_title("Velocity vs Time")
+
+    # Frequency domain plotting helper
+    def plot_fft(ax, data, time_data, title):
+        n = len(data)
+        if n < 2:
+            # Not enough data for FFT
+            ax.text(0.5, 0.5, "Not enough data for FFT", ha='center', va='center')
+            ax.set_title(title)
+            return
+
+        # Calculate sampling interval dt safely
+        dt_arr = np.diff(time_data)
+        dt = np.mean(dt_arr[dt_arr > 0]) if np.any(dt_arr > 0) else 1e-6
+
+        freqs = np.fft.rfftfreq(n, d=dt)
+        fft_vals = np.abs(np.fft.rfft(data))
+
+        # Defensive check: truncate fft_vals if length mismatch happens
+        if len(freqs) != len(fft_vals):
+            min_len = min(len(freqs), len(fft_vals))
+            freqs = freqs[:min_len]
+            fft_vals = fft_vals[:min_len]
+
+        ax.plot(freqs, fft_vals)
+        ax.set_title(title)
+        ax.set_xlabel("Frequency (Hz)")
+        ax.set_ylabel("Magnitude")
+
+    # Plot acceleration frequency
+    plot_fft(ax_acc_freq, acc_data, time_data, "Acceleration Frequency Spectrum")
+
+    # Plot velocity frequency
+    plot_fft(ax_vel_freq, vel_data, time_data, "Velocity Frequency Spectrum")
+
+
+
     canvas.draw_idle()
 
-def make_notification_handler(app):
-    def handler(sender, data):
-        acceleration = parse_acceleration_packet(data)
-        acc_sample = acceleration[0] if len(acceleration) > 0 else 0
-
-        app.acc_data.append(acc_sample)
-        app.time_data.append(len(app.time_data))
-        app.vel_data.append(0)
-
-        max_points = 200
-        if len(app.acc_data) > max_points:
-            app.acc_data = app.acc_data[-max_points:]
-            app.time_data = app.time_data[-max_points:]
-            app.vel_data = app.vel_data[-max_points:]
-    return handler
 
 def start_acceleration_stream(app2):
-    """
-    Starts BLE notifications on the data characteristic and appends incoming data
-    to app2.data_buffer.
-    """
+    import time
+    import struct
+
     async def notification_handler(sender, data):
-        """
-        Callback for BLE notifications.
-        `data` is bytes received from the characteristic.
-        """
-        # Append incoming data bytes to buffer for processing
-        app2.data_buffer.extend(data)
+        now = time.time()  # current timestamp
+
+        # Example: interpret bytes as signed integers
+        acc_values = list(data)  # replace with correct decoding
+        acc_mean = sum(acc_values) / len(acc_values)  # simple example
+
+        app2.time_data.append(now)
+        app2.acc_data.append(acc_mean)
+
+        # Optional: integrate to get velocity
+        if len(app2.time_data) > 1:
+            dt = app2.time_data[-1] - app2.time_data[-2]
+            new_vel = app2.vel_data[-1] + acc_mean * dt
+            app2.vel_data.append(new_vel)
+        else:
+            app2.vel_data.append(0)
 
     async def start_notify():
+        print("notify:")
         if app2.client and app2.client.is_connected:
             await app2.client.start_notify(DATA_UUID, notification_handler)
+            print("get notified")
         else:
             print("Client not connected, cannot start notifications")
 
     # Schedule the coroutine safely from synchronous context
     asyncio.run_coroutine_threadsafe(start_notify(), app2.loop)
-
-def start_acceleration_stream(app, client):
-    handler = make_notification_handler(app)
-    asyncio.run_coroutine_threadsafe(
-        client.start_notify(DATA_UUID, handler),
-        asyncio.get_event_loop()  # or app.loop if you keep it
-    )
+    print("Finish")
 
 
 def parse_acceleration_packet(raw_data):

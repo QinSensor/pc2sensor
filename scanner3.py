@@ -6,7 +6,7 @@ from tkinter import ttk, messagebox
 from bleak import BleakScanner, BleakClient
 import subprocess
 from a_sensor import ASensorParameterApp
-from utils.plot_utils import start_acceleration_stream
+# from utils.plot_utils import start_acceleration_stream
 from utils.sensor_map import UUID_MAP, MAPPINGS  # Ensure you have these mappings
 
 

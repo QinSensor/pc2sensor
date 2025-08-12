@@ -19,6 +19,7 @@ from utils.show_battery_temp import *
 
 class ASensorParameterApp:
     def __init__(self, root, parent, address, name, client, loop):
+        self.data_buffer = []
         self.root = root
         self.loop = loop
         self.root.title(address + '(' + name + ')')
@@ -95,7 +96,7 @@ class ASensorParameterApp:
         self.acc_data = []
         self.vel_data = []
 
-        start_acceleration_stream(self, self.client)
+        start_acceleration_stream(self)
         # Start periodic updates
         self.root.after(1000, lambda: update_temp_time(self))
         self.root.after(200, lambda: update_plot_display(self))
