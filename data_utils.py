@@ -30,30 +30,31 @@ async def async_update_sensor_readings(client, temp_var, battery_var):
         battery_var.set(f"Battery: {batt_raw}%")
 
 
-def update_temp_time(self):
+def update_temp_time(app):
         asyncio.run_coroutine_threadsafe(
-            async_update_sensor_readings(self.client, self.temp_var, self.battery_var),
-            self.loop
+            async_update_sensor_readings(app.client, app.temp_var, app.battery_var),
+            app.loop
         )
-        self.root.after(200000, self.update_temp_time)
+        app.root.after(200000, lambda: update_temp_time(app))
 
-def update_plot_display(self):
+def update_plot_display(app):
     # --- Fake example data ---
-    if len(self.time_data) > 200:
-        self.time_data.pop(0)
-        self.acc_data.pop(0)
-        self.vel_data.pop(0)
-    t = self.time_data[-1] + 0.02 if self.time_data else 0
+    if len(app.time_data) > 200:
+        app.time_data.pop(0)
+        app.acc_data.pop(0)
+        app.vel_data.pop(0)
+    t = app.time_data[-1] + 0.02 if app.time_data else 0
     acc = np.sin(2 * np.pi * 1 * t)
-    vel = (self.vel_data[-1] + acc * 0.02) if self.vel_data else 0
-    self.time_data.append(t)
-    self.acc_data.append(acc)
-    self.vel_data.append(vel)
+    vel = (app.vel_data[-1] + acc * 0.02) if app.vel_data else 0
+    app.time_data.append(t)
+    app.acc_data.append(acc)
+    app.vel_data.append(vel)
 
-    update_plots(self.ax_acc_time, self.ax_acc_freq, self.ax_vel_time, self.ax_vel_freq,
-                 self.time_data, self.acc_data, self.vel_data, self.canvas)
+    update_plots(app.ax_acc_time, app.ax_acc_freq, app.ax_vel_time, app.ax_vel_freq,
+                 app.time_data, app.acc_data, app.vel_data, app.canvas)
 
-    self.root.after(200, self.update_plot_display)
+    app.root.after(200, lambda: update_plot_display(app))
+
 
 def update_plots(ax_acc_time, ax_acc_freq, ax_vel_time, ax_vel_freq,
                  time_data, acc_data, vel_data, canvas, dt=0.02):
@@ -89,15 +90,15 @@ def update_plots(ax_acc_time, ax_acc_freq, ax_vel_time, ax_vel_freq,
     canvas.draw()
     
     
-def start_acceleration_stream(self):
+def start_acceleration_stream(app):
     """Subscribe to acceleration data from sensor."""
     asyncio.run_coroutine_threadsafe(
-        self.client.start_notify(DATA_UUID, self.handle_acceleration),
-        self.loop
+        app.client.start_notify(DATA_UUID, app.handle_acceleration),
+        app.loop
     )
 
 
-def handle_acceleration(self, sender, data: bytearray):
+def handle_acceleration(app, sender, data: bytearray):
     """Callback when acceleration data arrives."""
     # Example: assume data is 3x int16 values (X, Y, Z) in little endian
     x = int.from_bytes(data[0:2], byteorder="little", signed=True)
@@ -108,14 +109,14 @@ def handle_acceleration(self, sender, data: bytearray):
     acc_value = (x**2 + y**2 + z**2)**0.5  # magnitude in raw units
 
     # Keep data buffers small
-    if len(self.time_data) > 200:
-        self.time_data.pop(0)
-        self.acc_data.pop(0)
-        self.vel_data.pop(0)
+    if len(app.time_data) > 200:
+        app.time_data.pop(0)
+        app.acc_data.pop(0)
+        app.vel_data.pop(0)
 
-    t = self.time_data[-1] + 0.02 if self.time_data else 0
-    vel_value = (self.vel_data[-1] + acc_value*0.02) if self.vel_data else 0
+    t = app.time_data[-1] + 0.02 if app.time_data else 0
+    vel_value = (app.vel_data[-1] + acc_value*0.02) if app.vel_data else 0
 
-    self.time_data.append(t)
-    self.acc_data.append(acc_value)
-    self.vel_data.append(vel_value)
+    app.time_data.append(t)
+    app.acc_data.append(acc_value)
+    app.vel_data.append(vel_value)

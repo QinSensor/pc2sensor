@@ -103,8 +103,6 @@ class ASensorParameterApp:
 
         self.enable_editors()
 
-
-
     def enable_editors(self):
         for editor in self.editors.values():
             editor.widget["state"] = "normal"
