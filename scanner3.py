@@ -6,6 +6,7 @@ from tkinter import ttk, messagebox
 from bleak import BleakScanner, BleakClient
 import subprocess
 from a_sensor import ASensorParameterApp
+from utils.plot_utils import start_acceleration_stream
 from utils.sensor_map import UUID_MAP, MAPPINGS  # Ensure you have these mappings
 
 
@@ -36,8 +37,12 @@ class BLEDeviceScanner:
             found_devices = await BleakScanner.discover()
             now = time.time()
 
+            # Track addresses found this scan
+            found_addresses = set()
+
             for dev in found_devices:
                 if dev.name and dev.name.startswith("BluVib"):
+                    found_addresses.add(dev.address)
                     info = self.device_map.setdefault(dev.address, {
                         "name": dev.name,
                         "address": dev.address,  # Add this line here
@@ -56,6 +61,7 @@ class BLEDeviceScanner:
                             await client.connect()
                             print(f"Connected to {dev.address}")
                             self.device_clients[dev.address] = client
+                            # start_acceleration_stream(client)
                         except Exception as e:
                             print(f"Failed to connect {dev.address}:", e)
                             continue
@@ -71,6 +77,7 @@ class BLEDeviceScanner:
 
             self.refresh_table()
             await asyncio.sleep(10)
+
 
     def connect_device(self, address):
         client = self.device_clients.get(address)
@@ -102,6 +109,7 @@ class BLEDeviceScanner:
             return f"Error: {e}"
 
     def refresh_table(self):
+        print("Refreshing UI table")
         self.tree.delete(*self.tree.get_children())
         for addr, info in self.device_map.items():
             seen_diff = int(time.time() - info["seen"])
@@ -115,6 +123,22 @@ class BLEDeviceScanner:
                 seen_str,
                 "View"
             ))
+
+    # Method called by App2 after commit to remove sensor immediately
+    async def on_sensor_commit(self, sensor_address):
+        if sensor_address in self.device_map:
+            print(f"App1: Removing sensor {sensor_address} after commit")
+            self.device_map.pop(sensor_address, None)
+
+        if sensor_address in self.device_clients:
+            client = self.device_clients.pop(sensor_address)
+            try:
+                await client.disconnect()
+                print(f"Disconnected client for {sensor_address}")
+            except Exception:
+                pass
+
+        self.refresh_table()
 
     def on_click(self, event):
         """Handle clicks on the 'View' action column."""

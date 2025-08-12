@@ -3,7 +3,6 @@ from tkinter import ttk
 from bleak import BleakScanner, BleakClient
 import threading
 import asyncio
-
 from .sensor_map import MAPPINGS, UUID_MAP_BUTTON, UUID_MAP
 
 
@@ -89,22 +88,62 @@ class BLEParameterEditor:
         asyncio.run_coroutine_threadsafe(self.on_value_selected(event), self.loop)
         # asyncio.create_task(self.on_value_selected(event), self.loop)
 
-    async def on_value_selected(self, event=None):
-        address = self.client.address if self.client else None
-        if not self.client or not self.client.is_connected:
+    # async def on_value_selected(self, event=None):
+    #
+    #     self.client = await self.reconnect()
+    #     # TODO
+    #     print("21")
+    #     try:
+    #         future = asyncio.run_coroutine_threadsafe(self.write_value_with_timeout(), self.loop)
+    #         future.add_done_callback(lambda fut: print("Write completed or failed"))
+    #     except asyncio.TimeoutError:
+    #         print(f"Write timed out — assuming disconnect.")
+    #         self.client = await self.reconnect()
+    #         try:
+    #             future = asyncio.run_coroutine_threadsafe(self.write_value_with_timeout(), self.loop)
+    #             future.add_done_callback(lambda fut: print("Write completed or failed"))
+    #             print("Write to Variant successful after reconnect")
+    #         except Exception as e:
+    #             print("Write to Variant failed after reconnect:", e)
+    #             raise e
+    #     except Exception as e:
+    #         print("Write to Variant failed:", e)
+    #         raise e
+    #     print("22")
 
+    async def on_value_selected(self, event=None):
+        self.client = await self.reconnect()
+        try:
+            await self.write_value_with_timeout()
+            print("Write completed successfully")
+
+        except asyncio.TimeoutError:
+            print("Write timed out — assuming disconnect.")
+            self.client = await self.reconnect()
+            try:
+                await self.write_value_with_timeout()
+                print("Write to Variant successful after reconnect")
+            except Exception as e:
+                print("Write to Variant failed after reconnect:", e)
+                raise e
+        except Exception as e:
+            print("Write to Variant failed:", e)
+            raise e
+
+    async def reconnect(self):
+        # address = self.client.address if self.client else None
+        if not self.client or not self.client.is_connected:
             print("Not Connected! Trying to reconnect...")
             self.frame.after(0, lambda: self.status.set(f"Reconnecting..."))
 
-            print("31")
+            print("Setting Label")
             devices = await BleakScanner.discover(timeout=5.0)
-            found = any(d.address == address for d in devices)
-            print("32")
+            found = any(d.address == self.address for d in devices)
+            print("Looking for device matching Address")
             if not found:
-
                 self.frame.after(0, lambda: self.status.set(f"Sensor Not Found..."))
-                raise Exception(f"Device with address {address} was not found during scan.")
-            print("33")
+                raise Exception(f"Device with address {self.address} was not found during scan.")
+            print("Before disconnection")
             try:
                 # If client exists, disconnect first to clean up
                 if self.client:
@@ -113,19 +152,18 @@ class BLEParameterEditor:
                     except Exception:
                         pass
                 # Create new client instance if needed
-                print("34")
+                print("After disconnection")
                 self.client = BleakClient(self.address)
-                print("35")
+                print("Creating new Client")
                 await self.client.connect()
                 self.frame.after(0, lambda: self.status.set(f"Reconnected"))
-                print(f"Value Selected: Reconnected successfully to {address}.")
+                print(f"Value Selected: Reconnected successfully to {self.address}.")
             except Exception as e:
                 self.frame.after(0, lambda: self.status.set(f"Reconnection Failed"))
                 print("Value Selected: Reconnect Device {address} failed:", e)
                 return
-        print("21")
-        await self._async_write_value()
-        print("22")
+        return self.client
+
 
     async def _async_write_value(self):
         try:
@@ -148,6 +186,16 @@ class BLEParameterEditor:
             print(f"Wrote {raw_val} ({label}) to {self.param_key} ({self.uuid}, {byte_size} bytes)")
         except Exception as e:
             print(f"Failed to write {self.param_key}:", e)
+            self.frame.after(0, lambda: self.status.set("Write failed"))
+
+    async def write_value_with_timeout(self, timeout=5):
+        try:
+            await asyncio.wait_for(self._async_write_value(), timeout=timeout)
+        except asyncio.TimeoutError:
+            print(f"Write operation timed out after {timeout} seconds.")
+            self.frame.after(0, lambda: self.status.set("Write timed out"))
+        except Exception as e:
+            print("Unexpected error during write:", e)
             self.frame.after(0, lambda: self.status.set("Write failed"))
 
 

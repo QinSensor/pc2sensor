@@ -54,70 +54,73 @@ def update_plots(ax_acc_time, ax_acc_freq, ax_vel_time, ax_vel_freq, time_data, 
     # Similarly update freq domain and velocity plots here...
     canvas.draw_idle()
 
+def make_notification_handler(app):
+    def handler(sender, data):
+        acceleration = parse_acceleration_packet(data)
+        acc_sample = acceleration[0] if len(acceleration) > 0 else 0
+
+        app.acc_data.append(acc_sample)
+        app.time_data.append(len(app.time_data))
+        app.vel_data.append(0)
+
+        max_points = 200
+        if len(app.acc_data) > max_points:
+            app.acc_data = app.acc_data[-max_points:]
+            app.time_data = app.time_data[-max_points:]
+            app.vel_data = app.vel_data[-max_points:]
+    return handler
+
+def start_acceleration_stream(app2):
+    """
+    Starts BLE notifications on the data characteristic and appends incoming data
+    to app2.data_buffer.
+    """
+    async def notification_handler(sender, data):
+        """
+        Callback for BLE notifications.
+        `data` is bytes received from the characteristic.
+        """
+        # Append incoming data bytes to buffer for processing
+        app2.data_buffer.extend(data)
+
+    async def start_notify():
+        if app2.client and app2.client.is_connected:
+            await app2.client.start_notify(DATA_UUID, notification_handler)
+        else:
+            print("Client not connected, cannot start notifications")
+
+    # Schedule the coroutine safely from synchronous context
+    asyncio.run_coroutine_threadsafe(start_notify(), app2.loop)
+
+def start_acceleration_stream(app, client):
+    handler = make_notification_handler(app)
+    asyncio.run_coroutine_threadsafe(
+        client.start_notify(DATA_UUID, handler),
+        asyncio.get_event_loop()  # or app.loop if you keep it
+    )
 
 
-# def notification_handler(sender, data):
-#     # data is bytes received from characteristic
-#     print(f"Notification from {sender}: {data}")
-#     # parse data and update plots accordingly
-#
-#
-#
+def parse_acceleration_packet(raw_data):
+    """
+    Parse raw data from sensor characteristic.
+    raw_data: bytes object with length 16 or 128.
+    Returns:
+        np.array of floats: acceleration in g units (signed, centered around 0)
+    """
+    # Number of samples = len(raw_data) / 2
+    num_samples = len(raw_data) // 2
+    # Unpack as unsigned shorts, little-endian
+    samples = struct.unpack('<' + 'H' * num_samples, raw_data)
 
+    # Convert to signed centered values: raw - 0x8000
+    centered = np.array(samples) - 0x8000
 
+    # Convert to g units (assuming full scale ±2g, raw value range is 0 to 65535)
+    # scale_factor depends on sensor spec; if ±2g over 65536 steps:
+    scale_factor = 2.0 / 32768  # since 0x8000 is center
 
-# def update_plot_display(app):
-#     # --- Fake example data ---
-#     if len(app.time_data) > 200:
-#         app.time_data.pop(0)
-#         app.acc_data.pop(0)
-#         app.vel_data.pop(0)
-#     t = app.time_data[-1] + 0.02 if app.time_data else 0
-#     acc = np.sin(2 * np.pi * 1 * t)
-#     vel = (app.vel_data[-1] + acc * 0.02) if app.vel_data else 0
-#     app.time_data.append(t)
-#     app.acc_data.append(acc)
-#     app.vel_data.append(vel)
-#
-#     update_plots(app.ax_acc_time, app.ax_acc_freq, app.ax_vel_time, app.ax_vel_freq,
-#                  app.time_data, app.acc_data, app.vel_data, app.canvas)
-#
-#     app.root.after(200, lambda: update_plot_display(app))
-
-# async def read_acceleration_data(client, data_uuid):
-#     try:
-#         await client.start_notify(DATA_UUID, notification_handler)
-#         raw_data = await client.read_gatt_char(data_uuid)
-#         acc_samples = parse_acceleration_packet(raw_data)
-#         # For simplicity, return mean acceleration magnitude of samples
-#         magnitude = np.linalg.norm(acc_samples) / np.sqrt(len(acc_samples))  # RMS approx
-#         return magnitude
-#     except Exception as e:
-#         print("Error reading acceleration data:", e)
-#         return None
-
-
-# def parse_acceleration_packet(raw_data):
-#     """
-#     Parse raw data from sensor characteristic.
-#     raw_data: bytes object with length 16 or 128.
-#     Returns:
-#         np.array of floats: acceleration in g units (signed, centered around 0)
-#     """
-#     # Number of samples = len(raw_data) / 2
-#     num_samples = len(raw_data) // 2
-#     # Unpack as unsigned shorts, little-endian
-#     samples = struct.unpack('<' + 'H' * num_samples, raw_data)
-#
-#     # Convert to signed centered values: raw - 0x8000
-#     centered = np.array(samples) - 0x8000
-#
-#     # Convert to g units (assuming full scale ±2g, raw value range is 0 to 65535)
-#     # scale_factor depends on sensor spec; if ±2g over 65536 steps:
-#     scale_factor = 2.0 / 32768  # since 0x8000 is center
-#
-#     acceleration_g = centered * scale_factor
-#     return acceleration_g
+    acceleration_g = centered * scale_factor
+    return acceleration_g
 
 # def update_plots(ax_acc_time, ax_acc_freq, ax_vel_time, ax_vel_freq,
 #                  time_data, acc_data, vel_data, canvas, dt=0.02):
@@ -153,12 +156,6 @@ def update_plots(ax_acc_time, ax_acc_freq, ax_vel_time, ax_vel_freq, time_data, 
 #     canvas.draw()
 #
     
-# def start_acceleration_stream(app):
-#     """Subscribe to acceleration data from sensor."""
-#     asyncio.run_coroutine_threadsafe(
-#         app.client.start_notify(DATA_UUID, app.handle_acceleration),
-#         app.loop
-#     )
 
 
 # def handle_acceleration(app, sender, data: bytearray):

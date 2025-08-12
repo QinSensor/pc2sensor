@@ -11,7 +11,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from utils.ActionButtons import BLEActionButtons
 from utils.sensor_map import UUID_MAP,  PARAM_LABELS
-from utils.plot_utils import update_plot_display
+from utils.plot_utils import update_plot_display, start_acceleration_stream
 from utils.ble_connect import connect_sensor, disconnect_sensor
 from utils.commit_utils import on_commit_button_click
 from utils.show_battery_temp import *
@@ -43,7 +43,7 @@ class ASensorParameterApp:
 
         print("Debug: final values: ", self.param_final_values)
 
-        self.commit_button = tk.Button(self.main_frame, text="SAVE", command=lambda: on_commit_button_click(self))
+        self.commit_button = tk.Button(self.main_frame, text="SAVE", command=lambda: on_commit_button_click(self, address, parent))
         self.commit_button.pack(pady=0)
         # Status label (initially empty)
         self.commit_status_label = tk.Label(self.main_frame, text="", fg="green")
@@ -95,6 +95,7 @@ class ASensorParameterApp:
         self.acc_data = []
         self.vel_data = []
 
+        start_acceleration_stream(self, self.client)
         # Start periodic updates
         self.root.after(1000, lambda: update_temp_time(self))
         self.root.after(200, lambda: update_plot_display(self))
