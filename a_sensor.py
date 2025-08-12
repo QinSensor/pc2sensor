@@ -40,7 +40,12 @@ class BLEParameterEditor:
         else:
             self.widget = ttk.Entry(self.frame, textvariable=self.selected_value)
             self.widget.pack(side='left', padx=5)
-            ttk.Button(self.frame, text="Set", command=self.on_value_selected).pack(side='left', padx=5)
+            # ttk.Button(self.frame, text="Set", command=self.on_value_selected).pack(side='left', padx=5)
+            # Trigger on_value_selected when user presses Enter
+            self.widget.bind("<Return>", lambda e: self.on_value_selected())
+
+            # OR: trigger whenever text changes (instant update)
+            # self.selected_value.trace_add("write", lambda *args: self.on_value_selected())
 
         self.widget["state"] = "disabled"
 
@@ -69,7 +74,6 @@ class BLEParameterEditor:
             print("Debug: final:", self.param_final_values)
             if self.param_key == "trigger_delay":
                 label = int(self.param_final_values["trigger_delay"])   # TODO ask Jim about its definiction
-
 
             # Update GUI in main thread
             self.frame.after(0, lambda: self.update_ui(label))
