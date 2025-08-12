@@ -10,6 +10,9 @@ from a_sensor import ASensorParameterApp
 from utils.sensor_map import UUID_MAP, MAPPINGS  # Ensure you have these mappings
 
 
+# TODO date calibration
+# TODO button of clear_capture and
+
 class BLEDeviceScanner:
     def __init__(self, root, loop):
         self.loop = loop
