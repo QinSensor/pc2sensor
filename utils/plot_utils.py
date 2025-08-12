@@ -52,7 +52,6 @@ def update_plots(ax_acc_time, ax_acc_freq, ax_vel_time, ax_vel_freq, time_data, 
     ax_acc_time.set_title("Acceleration vs Time")
 
     # Similarly update freq domain and velocity plots here...
-
     canvas.draw_idle()
 
 
