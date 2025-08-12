@@ -13,7 +13,7 @@ from bleak import BleakClient, BleakScanner
 
 from ActionButtons import BLEActionButtons
 from sensor_map import UUID_MAP, MAPPINGS, UUID_MAP_BUTTON, PARAM_LABELS
-from data_utils import async_update_sensor_readings, update_plots
+from data_utils import async_update_sensor_readings, update_plots, start_acceleration_stream
 
 
 class BLEParameterEditor:
@@ -177,6 +177,7 @@ class ASensorParameterApp:
 
         self.main_frame = ttk.Frame(root)
         self.main_frame.pack(padx=10, pady=10)
+        self.start_acceleration_stream()
 
 
 
