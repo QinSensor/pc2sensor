@@ -15,7 +15,7 @@ from sensor_map import UUID_MAP,  PARAM_LABELS
 from data_utils import async_update_sensor_readings, update_plots, start_acceleration_stream, update_temp_time, \
     update_plot_display
 from ble_connect import connect_sensor, disconnect_sensor
-from button import on_commit_button_click
+from commit_utils import on_commit_button_click
 
 
 class ASensorParameterApp:

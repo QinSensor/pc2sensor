@@ -151,36 +151,7 @@ class BLEParameterEditor:
             self.frame.after(0, lambda: self.status.set("Write failed"))
 
 
-async def ensure_fresh_connection(self, client):
-    if not client or not client.is_connected:
-        address = client.address if client else None
-        self.commit_status_label.config(text=f"Reconnecting...", fg="red")
-        print(f"Not Connected to {address}! Trying to reconnect...")
 
-        # Scan for device first
-        devices = await BleakScanner.discover(timeout=5.0)
-        found = any(d.address == address for d in devices)
-
-        if not found:
-            self.commit_status_label.config(text=f"Sensor Not Found", fg="red")
-            raise Exception(f"Device with address {address} was not found during scan.")
-
-        if client:
-            try:
-                await client.disconnect()
-            except Exception:
-                pass
-
-        client = BleakClient(address)
-        try:
-            await client.connect()
-            self.commit_status_label.config(text=f"Reconnected", fg="green")
-            print(f"Reconnected successfully to {address}.")
-        except Exception as e:
-            self.commit_status_label.config(text=f"Sensor Not Found", fg="red")
-            raise Exception(f"Device {address} not connected and reconnection failed.") from e
-
-    return client
 
 
 

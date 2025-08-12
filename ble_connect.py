@@ -16,9 +16,20 @@
 def connect_sensor(app):
     app.parent.connect_device(app.address)
     app.conn_status.set("Connected")
-    app.update_button_states()
+    update_button_states(app)
+
 
 def disconnect_sensor(app):
     app.parent.disconnect_device(app.address)
     app.conn_status.set("Disconnected")
-    app.update_button_states()
+    update_button_states(app)
+
+
+def update_button_states(app):
+    status = app.conn_status.get().lower()
+    if status == "connected":
+        app.connect_btn["state"] = "disabled"
+        app.disconnect_btn["state"] = "normal"
+    else:
+        app.connect_btn["state"] = "normal"
+        app.disconnect_btn["state"] = "disabled"
