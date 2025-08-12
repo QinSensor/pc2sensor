@@ -1,6 +1,6 @@
 import struct
 
-from sensor_map import UUID_DATA
+from utils.sensor_map import UUID_DATA
 
 data_uuid, data_size = UUID_DATA["data"]
 calb_uuid, calb_size = UUID_DATA["calibration"]

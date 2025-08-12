@@ -1,7 +1,8 @@
 import asyncio
 import threading
 from tkinter import ttk
-from sensor_map import UUID_MAP, UUID_MAP_BUTTON  # Make sure your UUID_MAP contains the needed keys
+from utils.sensor_map import UUID_MAP_BUTTON  # Make sure your UUID_MAP contains the needed keys
+
 
 class BLEActionButtons:
     def __init__(self, parent, client):

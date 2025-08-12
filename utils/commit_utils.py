@@ -50,8 +50,9 @@ def _on_commit_done(app, future):
         app.commit_status_label.after(0, lambda:
             app.commit_status_label.config(text="Commit successful ✅", fg="green"))
     except Exception as ee:
-        app.commit_status_label.after(0, lambda:
-            app.commit_status_label.config(text=f"Commit failed ❌: {ee}", fg="red"))
+        app.commit_status_label.after(0, lambda ee=ee:
+        app.commit_status_label.config(text=f"Commit failed ❌: {ee}", fg="red"))
+
     finally:
         app.commit_status_label.after(3000, lambda: app.commit_status_label.config(text=""))
 

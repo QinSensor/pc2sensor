@@ -4,7 +4,7 @@ from bleak import BleakScanner, BleakClient
 import threading
 import asyncio
 
-from sensor_map import MAPPINGS, UUID_MAP_BUTTON, UUID_MAP
+from .sensor_map import MAPPINGS, UUID_MAP_BUTTON, UUID_MAP
 
 
 class BLEParameterEditor:

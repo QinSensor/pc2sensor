@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import ttk
 from bleak import BleakClient
 import threading
-from sensor_map import UUID_MAP, MAPPINGS
+from utils.sensor_map import UUID_MAP, MAPPINGS
 
 ADDRESS = "FA:E2:AD:E2:8D:99"
 

@@ -6,7 +6,7 @@ from tkinter import ttk, messagebox
 from bleak import BleakScanner, BleakClient
 import subprocess
 from a_sensor import ASensorParameterApp
-from sensor_map import UUID_MAP, MAPPINGS  # Ensure you have these mappings
+from utils.sensor_map import UUID_MAP, MAPPINGS  # Ensure you have these mappings
 
 
 class BLEDeviceScanner:

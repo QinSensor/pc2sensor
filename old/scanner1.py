@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import ttk
 from bleak import BleakScanner, BleakClient
 
-from sensor_map import UUID_MAP, MAPPINGS  # Make sure this file exists with your mappings
+from utils.sensor_map import UUID_MAP, MAPPINGS  # Make sure this file exists with your mappings
 
 
 class BLEDeviceScanner:

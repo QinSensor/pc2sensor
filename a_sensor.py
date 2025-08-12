@@ -1,21 +1,20 @@
-import asyncio
 import tkinter as tk
 from tkinter import ttk
 import threading
 
-from editor import BLEParameterEditor
+from utils.edit_variant import BLEParameterEditor
 
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from ActionButtons import BLEActionButtons
-from sensor_map import UUID_MAP,  PARAM_LABELS
-from data_utils import async_update_sensor_readings, update_plots, start_acceleration_stream, update_temp_time, \
-    update_plot_display
-from ble_connect import connect_sensor, disconnect_sensor
-from commit_utils import on_commit_button_click
+from utils.ActionButtons import BLEActionButtons
+from utils.sensor_map import UUID_MAP,  PARAM_LABELS
+from utils.plot_utils import update_plot_display
+from utils.ble_connect import connect_sensor, disconnect_sensor
+from utils.commit_utils import on_commit_button_click
+from utils.show_battery_temp import *
 
 
 class ASensorParameterApp:
@@ -35,7 +34,6 @@ class ASensorParameterApp:
         self.main_frame = ttk.Frame(root)
         self.main_frame.pack(padx=10, pady=10)
 
-
         # Create editors but disable until connected
         for param_key in UUID_MAP.keys():
             label_text = PARAM_LABELS.get(param_key, param_key)
@@ -43,7 +41,6 @@ class ASensorParameterApp:
                                         self.param_final_values, self.loop, label=label_text)
             self.editors[param_key] = editor
 
-        # print(self.param_raw_values)
         print("Debug: final values: ", self.param_final_values)
 
         self.commit_button = tk.Button(self.main_frame, text="SAVE", command=lambda: on_commit_button_click(self))
@@ -51,7 +48,6 @@ class ASensorParameterApp:
         # Status label (initially empty)
         self.commit_status_label = tk.Label(self.main_frame, text="", fg="green")
         self.commit_status_label.pack()
-
 
         conn_frame = ttk.Frame(self.main_frame)
         conn_frame.pack(fill="x", pady=5)
@@ -69,7 +65,7 @@ class ASensorParameterApp:
 
         # Device actions in same line
         actions_frame = ttk.LabelFrame(conn_frame, text="Device Actions")
-        actions_frame.pack(side="left", padx=10)
+        actions_frame.pack(side="left", padx=5)
         BLEActionButtons(actions_frame, self.client)
 
         # ---- TEMPERATURE & BATTERY ----
@@ -77,9 +73,11 @@ class ASensorParameterApp:
         sensor_frame.pack(fill="x", pady=0)
 
         self.temp_var = tk.StringVar(value="Temp: -- °C")
-        self.battery_var = tk.StringVar(value="Battery: -- %")
+        self.battery_var = tk.StringVar(value="Battery: -- V")
+        self.time_var = tk.StringVar(value="Time: --:--:--")
         ttk.Label(sensor_frame, textvariable=self.temp_var).pack(anchor="w")
         ttk.Label(sensor_frame, textvariable=self.battery_var).pack(anchor="w")
+        ttk.Label(sensor_frame, textvariable=self.time_var).pack(anchor="w")
 
         # ---- PLOTS ----
         fig = Figure(figsize=(8, 6))
