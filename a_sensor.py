@@ -3,20 +3,19 @@ import tkinter as tk
 from tkinter import ttk
 import threading
 
-import numpy as np
+from editor import BLEParameterEditor
+
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from bleak import BleakClient, BleakScanner
-
 from ActionButtons import BLEActionButtons
 from sensor_map import UUID_MAP,  PARAM_LABELS
-from data_utils import async_update_sensor_readings, update_plots, start_acceleration_stream
-import editor.BLEParameterEditor
-
-
+from data_utils import async_update_sensor_readings, update_plots, start_acceleration_stream, update_temp_time, \
+    update_plot_display
+from ble_connect import connect_sensor, disconnect_sensor
+from button import on_commit_button_click
 
 
 class ASensorParameterApp:
@@ -25,7 +24,6 @@ class ASensorParameterApp:
         self.loop = loop
         self.root.title(address + '(' + name + ')')
         self.parent = parent  # Reference to BLEDeviceScanner
-        # self.client = self.parent.device_clients[address]  # or passed explicitly
         self.client = client  # or passed explicitly
         self.address = address
         self.name = name
@@ -36,8 +34,6 @@ class ASensorParameterApp:
 
         self.main_frame = ttk.Frame(root)
         self.main_frame.pack(padx=10, pady=10)
-        self.start_acceleration_stream()
-
 
 
         # Create editors but disable until connected
@@ -50,7 +46,7 @@ class ASensorParameterApp:
         # print(self.param_raw_values)
         print("Debug: final values: ", self.param_final_values)
 
-        self.commit_button = tk.Button(self.main_frame, text="SAVE", command=self.on_commit_button_click)
+        self.commit_button = tk.Button(self.main_frame, text="SAVE", command=lambda: on_commit_button_click(self))
         self.commit_button.pack(pady=0)
         # Status label (initially empty)
         self.commit_status_label = tk.Label(self.main_frame, text="", fg="green")
@@ -60,10 +56,10 @@ class ASensorParameterApp:
         conn_frame = ttk.Frame(self.main_frame)
         conn_frame.pack(fill="x", pady=5)
 
-        self.connect_btn = ttk.Button(conn_frame, text="Connect", command=self.connect_sensor)
+        self.connect_btn = ttk.Button(conn_frame, text="Connect", command=lambda: connect_sensor(self))
         self.connect_btn.pack(side="left", padx=5)
 
-        self.disconnect_btn = ttk.Button(conn_frame, text="Disconnect", command=self.disconnect_sensor)
+        self.disconnect_btn = ttk.Button(conn_frame, text="Disconnect", command=lambda: disconnect_sensor(self))
         self.disconnect_btn.pack(side="left", padx=5)
 
         # Connection status
@@ -102,35 +98,10 @@ class ASensorParameterApp:
         self.vel_data = []
 
         # Start periodic updates
-        self.root.after(1000, self.update_sensor_readings)
-        self.root.after(200, self.update_plots)
+        self.root.after(1000, lambda: update_temp_time(self))
+        self.root.after(200, lambda: update_plot_display(self))
 
         self.enable_editors()
-
-    def update_sensor_readings(self):
-        asyncio.run_coroutine_threadsafe(
-            async_update_sensor_readings(self.client, self.temp_var, self.battery_var),
-            self.loop
-        )
-        self.root.after(2000, self.update_sensor_readings)
-
-    def update_plot_display(self):
-        # --- Fake example data ---
-        if len(self.time_data) > 200:
-            self.time_data.pop(0)
-            self.acc_data.pop(0)
-            self.vel_data.pop(0)
-        t = self.time_data[-1] + 0.02 if self.time_data else 0
-        acc = np.sin(2 * np.pi * 1 * t)
-        vel = (self.vel_data[-1] + acc * 0.02) if self.vel_data else 0
-        self.time_data.append(t)
-        self.acc_data.append(acc)
-        self.vel_data.append(vel)
-
-        update_plots(self.ax_acc_time, self.ax_acc_freq, self.ax_vel_time, self.ax_vel_freq,
-                     self.time_data, self.acc_data, self.vel_data, self.canvas)
-
-        self.root.after(200, self.update_plot_display)
 
 
 
@@ -140,4 +111,6 @@ class ASensorParameterApp:
             editor.status.set("Connected")
             # Trigger read again after enabling
             threading.Thread(target=editor.read_value, daemon=True).start()
+
+
 

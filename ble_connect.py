@@ -1,3 +1,4 @@
+
 def connect_sensor(self):
     # Delegate to parent
     self.parent.connect_device(self.address)

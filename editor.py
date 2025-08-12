@@ -151,46 +151,6 @@ class BLEParameterEditor:
             self.frame.after(0, lambda: self.status.set("Write failed"))
 
 
-async def commit_changes(self, client):
-    print('11')
-    client =await ensure_fresh_connection(self, client)
-    print('12')
-    COMMIT_UUID = "1c930030-d459-11e7-9296-b8e856369374"
-    data = bytes([0x01])
-
-    self.commit_status_label.after(0, lambda:
-        self.commit_status_label.config(text="Committing...", fg="green"))
-    await asyncio.sleep(0)  # let UI refresh before we block
-    # self.commit_status_label.after(0, lambda:
-    # self.commit_status_label.config(text="Commit successful ✅", fg="green"))
-    # self.commit_status_label.config(text=f"Committing...", fg="green")
-    print('13')
-
-    try:
-        await asyncio.wait_for(client.write_gatt_char(COMMIT_UUID, data), timeout=5)
-        # await client.write_gatt_char(COMMIT_UUID, data)
-        # self.commit_status_label.config(text=f"Commit successful", fg="green")
-        print("Commit successful")
-    except asyncio.TimeoutError:
-        print(f"Write to {COMMIT_UUID} timed out — assuming disconnect.")
-        # self.commit_status_label.config(text=f"Reconnecting...", fg="red")
-        client = await ensure_fresh_connection(self, client)
-        try:
-            await asyncio.wait_for(client.write_gatt_char(COMMIT_UUID, data), timeout=5)
-            # self.commit_status_label.config(text="Commit successful ✅", fg="green")
-            print("Commit successful after reconnect")
-        except Exception as e:
-            # self.commit_status_label.config(text="Commit failed ❌", fg="red")
-            print("Commit failed after reconnect:", e)
-            raise e
-    except Exception as e:
-        # self.commit_status_label.config(text=f"Commit failed", fg="red")
-        print("Commit failed:", e)
-        raise e
-
-    return client
-
-
 async def ensure_fresh_connection(self, client):
     if not client or not client.is_connected:
         address = client.address if client else None
@@ -221,3 +181,6 @@ async def ensure_fresh_connection(self, client):
             raise Exception(f"Device {address} not connected and reconnection failed.") from e
 
     return client
+
+
+

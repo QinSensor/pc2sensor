@@ -30,6 +30,31 @@ async def async_update_sensor_readings(client, temp_var, battery_var):
         battery_var.set(f"Battery: {batt_raw}%")
 
 
+def update_temp_time(self):
+        asyncio.run_coroutine_threadsafe(
+            async_update_sensor_readings(self.client, self.temp_var, self.battery_var),
+            self.loop
+        )
+        self.root.after(200000, self.update_temp_time)
+
+def update_plot_display(self):
+    # --- Fake example data ---
+    if len(self.time_data) > 200:
+        self.time_data.pop(0)
+        self.acc_data.pop(0)
+        self.vel_data.pop(0)
+    t = self.time_data[-1] + 0.02 if self.time_data else 0
+    acc = np.sin(2 * np.pi * 1 * t)
+    vel = (self.vel_data[-1] + acc * 0.02) if self.vel_data else 0
+    self.time_data.append(t)
+    self.acc_data.append(acc)
+    self.vel_data.append(vel)
+
+    update_plots(self.ax_acc_time, self.ax_acc_freq, self.ax_vel_time, self.ax_vel_freq,
+                 self.time_data, self.acc_data, self.vel_data, self.canvas)
+
+    self.root.after(200, self.update_plot_display)
+
 def update_plots(ax_acc_time, ax_acc_freq, ax_vel_time, ax_vel_freq,
                  time_data, acc_data, vel_data, canvas, dt=0.02):
     """
