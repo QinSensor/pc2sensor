@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 import threading
 
+from bleak import BleakClient
+
 from utils.edit_variant import BLEParameterEditor
 
 import matplotlib
@@ -18,13 +20,14 @@ from utils.show_battery_temp import *
 
 
 class ASensorParameterApp:
-    def __init__(self, root, parent, address, name, client, loop):
+    def __init__(self, root, parent, address, name, sensor_connection, loop):
+        self.sensor_connection = sensor_connection
         self.data_buffer = []
         self.root = root
         self.loop = loop
         self.root.title(address + '(' + name + ')')
         self.parent = parent  # Reference to BLEDeviceScanner
-        self.client = client  # or passed explicitly
+        self.client = sensor_connection.get_client()  # or passed explicitly
         self.address = address
         self.name = name
         self.param_raw_values = {}
@@ -60,7 +63,7 @@ class ASensorParameterApp:
         self.disconnect_btn.pack(side="left", padx=5)
 
         # Connection status
-        initial_status = "Connected" if client.is_connected else "Disconnected"
+        initial_status = "Connected" if self.client.is_connected else "Disconnected"
         self.conn_status = tk.StringVar(value=initial_status)
         ttk.Label(conn_frame, textvariable=self.conn_status, foreground="blue").pack(side="left", padx=10)
 
@@ -110,5 +113,40 @@ class ASensorParameterApp:
             # Trigger read again after enabling
             threading.Thread(target=editor.read_value, daemon=True).start()
 
+    def update_client_reference(self):
+        self.client = self.parent.device_clients.get(self.sensor_address)
+
+    async def read_data(self):
+        client = self.sensor_connection.get_client()
+        if client and client.is_connected:
+            # read BLE data normally
+            pass
+        else:
+            print(f"Sensor {self.address} not connected")
+
+
+class SensorConnection:
+    def __init__(self, address):
+        self.address = address
+        self.client: BleakClient | None = None
+
+    async def connect(self):
+        if self.client and self.client.is_connected:
+            return
+        if self.client:
+            await self.client.disconnect()
+        self.client = BleakClient(self.address)
+        await self.client.connect()
+
+    async def disconnect(self):
+        if self.client and self.client.is_connected:
+            await self.client.disconnect()
+
+    def get_client(self):
+        return self.client
+
+    @property
+    def is_connected(self):
+        return self.client.is_connected if self.client else False
 
 
