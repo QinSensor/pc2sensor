@@ -12,16 +12,11 @@ calb_uuid, calb_size = UUID_DATA["calibration"]
 def update_plot_display(app):
     # Limit data size to avoid memory bloat
     max_points = 200
-    if len(app.time_data) > max_points:
-        app.time_data = app.time_data[-max_points:]
-        app.acc_data = app.acc_data[-max_points:]
-        app.vel_data = app.vel_data[-max_points:]
+    app.time_data = app.time_data[-max_points:] if app.time_data else [0]
+    app.acc_data = app.acc_data[-max_points:] if app.acc_data else [0]
+    app.vel_data = app.vel_data[-max_points:] if app.vel_data else [0]
 
-    # If no data yet, initialize with zeroes
-    if not app.time_data:
-        app.time_data.append(0)
-        app.acc_data.append(0)
-        app.vel_data.append(0)
+    print(len(app.time_data), len(app.acc_data), len(app.vel_data))
 
     # Update plots using your plotting function
     update_plots(
@@ -35,27 +30,23 @@ def update_plot_display(app):
         app.canvas,
     )
 
+    # Force redraw
+    try:
+        app.canvas.draw_idle()
+    except Exception as e:
+        print(f"Failed to redraw canvas: {e}")
+
     # Schedule next update call in 200ms
     app.root.after(200, lambda: update_plot_display(app))
 
 
 def update_plots(ax_acc_time, ax_acc_freq, ax_vel_time, ax_vel_freq, time_data, acc_data, vel_data, canvas):
+    print("Updating acc_time:", len(time_data))
+    print("Updating acc_freq:", len(acc_data))
     # --- Acceleration vs Time ---
     ax_acc_time.clear()
     ax_acc_time.plot(time_data, acc_data)
     ax_acc_time.set_title("Acceleration vs Time")
-
-    # # --- Acceleration Frequency Domain ---
-    # ax_acc_freq.clear()
-    # if len(acc_data) > 1:
-    #     dt = np.mean(np.diff(time_data))   # TODO ask Jim
-    #     # dt = time_data[1] - time_data[0]
-    #     if dt == 0:
-    #         dt = 1e-6  # tiny value to avoid zero division
-    #     freqs = np.fft.rfftfreq(len(acc_data), d=dt)
-    #     fft_vals = np.abs(np.fft.rfft(acc_data))
-    #     ax_acc_freq.plot(freqs, fft_vals)
-    # ax_acc_freq.set_title("Acceleration Frequency Spectrum")
 
     # --- Velocity vs Time ---
     ax_vel_time.clear()
@@ -94,8 +85,6 @@ def update_plots(ax_acc_time, ax_acc_freq, ax_vel_time, ax_vel_freq, time_data, 
 
     # Plot velocity frequency
     plot_fft(ax_vel_freq, vel_data, time_data, "Velocity Frequency Spectrum")
-
-
 
     canvas.draw_idle()
 
@@ -157,98 +146,3 @@ def parse_acceleration_packet(raw_data):
     acceleration_g = centered * scale_factor
     return acceleration_g
 
-# def update_plots(ax_acc_time, ax_acc_freq, ax_vel_time, ax_vel_freq,
-#                  time_data, acc_data, vel_data, canvas, dt=0.02):
-#     """
-#     Update four plots: acceleration time, acceleration spectrum,
-#     velocity time, velocity spectrum.
-#     """
-#     # FFT
-#     if len(acc_data) > 10:
-#         acc_fft = np.abs(np.fft.rfft(acc_data))
-#         vel_fft = np.abs(np.fft.rfft(vel_data))
-#         freqs = np.fft.rfftfreq(len(acc_data), d=dt)
-#     else:
-#         acc_fft = vel_fft = freqs = []
-#
-#     # Clear and redraw
-#     ax_acc_time.clear()
-#     ax_acc_time.plot(time_data, acc_data)
-#     ax_acc_time.set_title("Acceleration vs Time")
-#
-#     ax_acc_freq.clear()
-#     ax_acc_freq.plot(freqs, acc_fft)
-#     ax_acc_freq.set_title("Acceleration Spectrum")
-#
-#     ax_vel_time.clear()
-#     ax_vel_time.plot(time_data, vel_data)
-#     ax_vel_time.set_title("Velocity vs Time")
-#
-#     ax_vel_freq.clear()
-#     ax_vel_freq.plot(freqs, vel_fft)
-#     ax_vel_freq.set_title("Velocity Spectrum")
-#
-#     canvas.draw()
-#
-    
-
-
-# def handle_acceleration(app, sender, data: bytearray):
-#     """Callback when acceleration data arrives."""
-#     # Example: assume data is 3x int16 values (X, Y, Z) in little endian
-#     x = int.from_bytes(data[0:2], byteorder="little", signed=True)
-#     y = int.from_bytes(data[2:4], byteorder="little", signed=True)
-#     z = int.from_bytes(data[4:6], byteorder="little", signed=True)
-#
-#     # Pick one axis (or magnitude)
-#     acc_value = (x**2 + y**2 + z**2)**0.5  # magnitude in raw units
-#
-#     # Keep data buffers small
-#     if len(app.time_data) > 200:
-#         app.time_data.pop(0)
-#         app.acc_data.pop(0)
-#         app.vel_data.pop(0)
-#
-#     t = app.time_data[-1] + 0.02 if app.time_data else 0
-#     vel_value = (app.vel_data[-1] + acc_value*0.02) if app.vel_data else 0
-#
-#     app.time_data.append(t)
-#     app.acc_data.append(acc_value)
-#     app.vel_data.append(vel_value)
-#
-#
-# def update_plot_display(app):
-#     async def read_and_update():
-#         try:
-#             raw_data = await app.client.read_gatt_char(DATA_UUID)
-#             acc_samples = parse_acceleration_packet(raw_data)
-#
-#             # Calculate instantaneous acceleration magnitude (RMS)
-#             magnitude = np.sqrt(np.mean(acc_samples ** 2))
-#
-#             # Update data lists (keep max 200 points)
-#             if len(app.time_data) > 200:
-#                 app.time_data.pop(0)
-#                 app.acc_data.pop(0)
-#                 app.vel_data.pop(0)
-#
-#             t = app.time_data[-1] + 0.02 if app.time_data else 0
-#             app.time_data.append(t)
-#             app.acc_data.append(magnitude)
-#
-#             # Simple velocity integration (velocity += acceleration * dt)
-#             dt = 0.02
-#             vel = app.vel_data[-1] + magnitude * dt if app.vel_data else 0
-#             app.vel_data.append(vel)
-#
-#             # Update the plots
-#             update_plots(app.ax_acc_time, app.ax_acc_freq, app.ax_vel_time, app.ax_vel_freq,
-#                          app.time_data, app.acc_data, app.vel_data, app.canvas)
-#         except Exception as e:
-#             print("Failed to read or update plot:", e)
-#         finally:
-#             # Schedule next update after 200 ms
-#             app.root.after(200, lambda: update_plot_display(app))
-#
-#     # Run the async read_and_update safely in the event loop
-#     asyncio.run_coroutine_threadsafe(read_and_update(), app.loop)

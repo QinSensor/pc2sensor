@@ -133,26 +133,20 @@ class BLEDeviceScanner:
 
     # Method called by App2 after commit to remove sensor immediately
     async def on_sensor_commit(self, sensor_address):
-        # Mark as disconnected, don't remove from device_map
-        if sensor_address in self.device_map:
-            self.device_map[sensor_address]["connected"] = False
-            print(f"App1: Marked sensor {sensor_address} as disconnected after commit")
+        # # Mark as disconnected, don't remove from device_map
+        # if sensor_address in self.device_map:
+        #     self.device_map[sensor_address]["connected"] = False
+        #     print(f"App1: Marked sensor {sensor_address} as disconnected after commit")
+        sensor_conn = self.device_clients.get(sensor_address)
 
-        if sensor_address in self.device_clients:
-            old_conn = self.device_clients.pop(sensor_address)
-            try:
-                await old_conn.disconnect()
-                print(f"Disconnected old connection for {sensor_address}")
-            except Exception:
-                pass
-        sensor_conn = SensorConnection(sensor_address)
-        try:
+        if sensor_conn:
+            # Reconnect existing object (UI still holds reference)
+            await sensor_conn.reconnect()
+        else:
+            # First time connecting for this sensor
+            sensor_conn = SensorConnection(sensor_address)
             await sensor_conn.connect()
-            print(f"Connected to {sensor_address}")
-            self.device_clients[sensor_address] = sensor_conn  # store wrapper
-        except Exception as e:
-            print(f"Failed to connect {sensor_address}:", e)
-            return
+            self.device_clients[sensor_address] = sensor_conn
 
         now = time.time()
         info = self.device_map.setdefault(sensor_address, {

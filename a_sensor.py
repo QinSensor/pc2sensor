@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import threading
 
-from bleak import BleakClient
+from bleak import BleakClient, BleakScanner
 
 from utils.edit_variant import BLEParameterEditor
 
@@ -131,15 +131,17 @@ class SensorConnection:
         self.client: BleakClient | None = None
 
     async def connect(self):
-        if self.client and self.client.is_connected:
-            return
-        if self.client:
-            await self.client.disconnect()
-        self.client = BleakClient(self.address)
-        await self.client.connect()
+        try:
+            if self.client and getattr(self.client, "is_connected", False):
+                await self.client.disconnect()
+            self.client = BleakClient(self.address)
+            await self.client.connect()
+            print(f"Connected to {self.address}")
+        except Exception as e:
+            print(f"Failed to connect {self.address}: {e}")
 
     async def disconnect(self):
-        if self.client and self.client.is_connected:
+        if self.client and getattr(self.client, "is_connected", False):
             await self.client.disconnect()
 
     def get_client(self):
@@ -148,5 +150,28 @@ class SensorConnection:
     @property
     def is_connected(self):
         return self.client.is_connected if self.client else False
+
+    async def reconnect(self):
+        try:
+            if self.client and getattr(self.client, "is_connected", False):
+                await self.client.disconnect()
+            # if self.client and self.client.is_connected:
+            #     await self.client.disconnect()
+            self.client = BleakClient(self.address)
+            await self.client.connect()
+            print(f"Reconnected to {self.address}")
+        except Exception as e:
+            print(f"Failed to reconnect {self.address}: {e}")
+    # async def reconnect(self):
+    #     if self.client and getattr(self.client, "is_connected", False):
+    #         print(f"Already connected to {self.address}")
+    #         return  # reuse the existing client
+    #     try:
+    #         self.client = BleakClient(self.address)
+    #         await self.client.connect()
+    #         print(f"Reconnected to {self.address}")
+    #     except Exception as e:
+    #         print(f"Failed to reconnect {self.address}: {e}")
+    #         self.client = None
 
 
