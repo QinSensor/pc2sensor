@@ -1,11 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 import threading
-
 from bleak import BleakClient, BleakScanner
-
 from utils.edit_variant import BLEParameterEditor
-
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.figure import Figure
@@ -110,7 +107,6 @@ class ASensorParameterApp:
         for editor in self.editors.values():
             editor.widget["state"] = "normal"
             editor.status.set("Connected")
-            # Trigger read again after enabling
             threading.Thread(target=editor.read_value, daemon=True).start()
 
     def update_client_reference(self):

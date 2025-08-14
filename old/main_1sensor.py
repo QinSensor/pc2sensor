@@ -7,7 +7,8 @@ from bleak import BleakClient
 import threading
 from utils.sensor_map import UUID_MAP, MAPPINGS
 
-ADDRESS = "FA:E2:AD:E2:8D:99"
+ADDRESS = "FB:0C:16:50:98:DB"
+# "FB:0C:16:50:98:DB",  # 3 axis, 39
 
 class BLEParameterEditor:
     def __init__(self, parent, client, param_key):

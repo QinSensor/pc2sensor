@@ -16,7 +16,7 @@ def update_plot_display(app):
     app.acc_data = app.acc_data[-max_points:] if app.acc_data else [0]
     app.vel_data = app.vel_data[-max_points:] if app.vel_data else [0]
 
-    # print(len(app.time_data), len(app.acc_data), len(app.vel_data))
+    print(len(app.time_data), len(app.acc_data), len(app.vel_data))
 
     # Update plots using your plotting function
     update_plots(
@@ -41,8 +41,8 @@ def update_plot_display(app):
 
 
 def update_plots(ax_acc_time, ax_acc_freq, ax_vel_time, ax_vel_freq, time_data, acc_data, vel_data, canvas):
-    # print("Updating acc_time:", len(time_data))
-    # print("Updating acc_freq:", len(acc_data))
+    print("Updating acc_time:", len(time_data))
+    print("Updating acc_freq:", len(acc_data))
     # --- Acceleration vs Time ---
     ax_acc_time.clear()
     ax_acc_time.plot(time_data, acc_data)
@@ -87,6 +87,39 @@ def update_plots(ax_acc_time, ax_acc_freq, ax_vel_time, ax_vel_freq, time_data, 
     plot_fft(ax_vel_freq, vel_data, time_data, "Velocity Frequency Spectrum")
 
     canvas.draw_idle()
+
+import time
+def start_acceleration_stream_Scanner(sender, info, loop, calib):
+    async def notification_handler(sender, data):
+        now = time.time()  # current timestamp
+
+        calib_value = int(calib)
+        conversion_factor = 250000/(65536*calib_value)
+        acc_values = [(reading - 32768) * conversion_factor for reading in list(data)]
+        acc_mean = sum(acc_values) / len(acc_values)  # simple example
+
+        if info["data"] is []:
+            print("calibration is: ", calib_value)
+            print("Data length of one notification:", len(acc_values))
+
+        # Append every reading
+        info["data"].append({
+            "timestamp": now,
+            "acc_mean": acc_mean,
+            "raw": acc_values
+        })
+
+    async def start_notify():
+        print("\n notify:")
+        if sender and sender.is_connected:
+            await sender.start_notify(DATA_UUID, notification_handler)
+            print("get notified")
+        else:
+            print("Client not connected, cannot start notifications")
+
+    # Schedule the coroutine safely from synchronous context
+    asyncio.run_coroutine_threadsafe(start_notify(), loop)
+    print("Finish")
 
 
 def start_acceleration_stream(app2):

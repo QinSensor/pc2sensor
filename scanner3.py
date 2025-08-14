@@ -6,11 +6,11 @@ from tkinter import ttk, messagebox
 from bleak import BleakScanner, BleakClient
 import subprocess
 from a_sensor import ASensorParameterApp, SensorConnection
+from utils.plot_utils import start_acceleration_stream, start_acceleration_stream_Scanner
 # from utils.plot_utils import start_acceleration_stream
 from utils.sensor_map import UUID_MAP, MAPPINGS  # Ensure you have these mappings
 
 
-# TODO date calibration
 # TODO button of clear_capture and
 
 class BLEDeviceScanner:
@@ -32,6 +32,7 @@ class BLEDeviceScanner:
         self.device_clients = {}    # Address → connected BleakClient
         threading.Thread(target=self.scan_loop, daemon=True).start()
 
+
     def scan_loop(self):
         asyncio.run(self.scan_devices())
 
@@ -40,7 +41,6 @@ class BLEDeviceScanner:
             found_devices = await BleakScanner.discover()
             now = time.time()
 
-            # Track addresses found this scan
             found_addresses = set()
 
             for dev in found_devices:
@@ -49,9 +49,9 @@ class BLEDeviceScanner:
                     info = self.device_map.setdefault(dev.address, {
                         "name": dev.name,
                         "address": dev.address,  # Add this line here
-
+                        "data": [],
                         "connected": False,
-                        "mode": "Manual",  # Qin: in this mode, mode is not read
+                        "mode": "Unknown",  # Qin: in this mode, mode is not read
                         "readings": 0,  # starts at 0
                         "seen": now
                     })
@@ -76,12 +76,14 @@ class BLEDeviceScanner:
                     client = sensor_conn.get_client()
                     if client and client.is_connected:
                         info["connected"] = True
-                        info["mode"] = await self.read_mode_async(sensor_conn)
+                        info["mode"] = await self.read_value_async(sensor_conn, "mode")
                         info["readings"] += 1
+                        info["calibration"] = await self.read_value_async(sensor_conn, "calibration")
+                        start_acceleration_stream_Scanner(client, info, self.loop, info["calibration"])
                     else:
                         info["connected"] = False
 
-            self.refresh_table()
+                    self.refresh_table()
             await asyncio.sleep(10)
 
     def connect_device(self, address):
@@ -98,21 +100,21 @@ class BLEDeviceScanner:
             asyncio.run(client.disconnect())
             print(f"Disconnected from {address}")
 
-    async def read_mode_async(self, client):
+    async def read_value_async(self, client, para):
         """Async version for reading mode characteristic."""
         try:
             if hasattr(client, "get_client"):
                 client = client.get_client()  # unwrap SensorConnection
-            uuid, byte_size = UUID_MAP["mode"]
+            uuid, byte_size = UUID_MAP[para]
             value_bytes = await client.read_gatt_char(uuid)
             raw_val = int.from_bytes(value_bytes, byteorder="little")
 
-            mapping = MAPPINGS.get("mode", None)
+            mapping = MAPPINGS.get(para, None)
             if mapping:
                 return dict(mapping).get(raw_val, f"Unknown ({raw_val})")
             return str(raw_val)
         except Exception as e:
-            print("Failed to read mode:", e)
+            print("Failed to read :", para, e)
             return f"Error: {e}"
 
     def refresh_table(self):
@@ -130,6 +132,7 @@ class BLEDeviceScanner:
                 seen_str,
                 "View"
             ))
+            print("RawData for ", addr, "is ", info["data"])
 
     # Method called by App2 after commit to remove sensor immediately
     async def on_sensor_commit(self, sensor_address):
@@ -154,15 +157,19 @@ class BLEDeviceScanner:
             "address": sensor_address,
             "connected": False,
             "mode": "Manual",
+            "data": [],
             "readings": 0,
-            "seen": now
+            "seen": now,
+            "calibration": 0
         })
         info["seen"] = now  # time
 
         if sensor_conn.is_connected:
             info["connected"] = True
-            info["mode"] = await self.read_mode_async(sensor_conn.get_client())
+            info["mode"] = await self.read_value_async(sensor_conn.get_client(), "mode")
             info["readings"] += 1
+            print("Get data***********")
+
         else:
             info["connected"] = False
 
@@ -190,18 +197,6 @@ class BLEDeviceScanner:
             tk.messagebox.showerror("Error", f"No connected client found for {address}")
             return
         ASensorParameterApp(win, self, address, name, sensor_conn, self.loop)
-
-
-def restart_bluetooth_windows():
-    try:
-        subprocess.run(["powershell", "-Command", "Stop-Service bthserv -Force"], check=True)
-        time.sleep(3)  # give Bluetooth time to come back online
-        subprocess.run(["powershell", "-Command", "Start-Service bthserv"], check=True)
-        print("Bluetooth service restarted")
-    except Exception as e:
-        print(f"Failed to restart Bluetooth service: {e}")
-
-
 
 
 def start_loop(loop):
