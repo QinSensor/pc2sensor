@@ -10,7 +10,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from utils.ActionButtons import BLEActionButtons
 from utils.sensor_map import UUID_MAP,  PARAM_LABELS
-from utils.plot_utils import update_plot_display, start_acceleration_stream
+from utils.plot_utils import update_plot_display
 from utils.ble_connect import connect_sensor, disconnect_sensor
 from utils.commit_utils import on_commit_button_click
 from utils.show_battery_temp import *
@@ -44,11 +44,13 @@ class ASensorParameterApp:
 
         print("Debug: final values: ", self.param_final_values)
 
-        self.commit_button = tk.Button(self.main_frame, text="SAVE", command=lambda: on_commit_button_click(self, address, parent))
-        self.commit_button.pack(pady=0)
-        # Status label (initially empty)
-        self.commit_status_label = tk.Label(self.main_frame, text="", fg="green")
-        self.commit_status_label.pack()
+        button_frame = tk.Frame(self.main_frame)
+        button_frame.pack(pady=5)
+        self.commit_button = tk.Button(button_frame, text="SAVE",
+                                       command=lambda: on_commit_button_click(self, address, parent))
+        self.commit_button.pack(side="left", padx=5)
+        self.commit_status_label = tk.Label(button_frame, text="", fg="green")
+        self.commit_status_label.pack(side="left", padx=5)
 
         conn_frame = ttk.Frame(self.main_frame)
         conn_frame.pack(fill="x", pady=0)
@@ -70,42 +72,39 @@ class ASensorParameterApp:
         BLEActionButtons(actions_frame, self.client)
 
         # ---- TEMPERATURE & BATTERY ----
-        sensor_frame = ttk.LabelFrame(self.main_frame, text="Sensor Readings")
+        sensor_frame = tk.Frame(self.main_frame)
         sensor_frame.pack(fill="x", pady=0)
 
         self.temp_var = tk.StringVar(value="Temp: -- °C")
         self.battery_var = tk.StringVar(value="Battery: -- V")
         self.time_var = tk.StringVar(value="Time: --:--:--")
-        # ttk.Label(sensor_frame, textvariable=self.temp_var).pack(anchor="w")
-        # ttk.Label(sensor_frame, textvariable=self.battery_var).pack(anchor="w")
-        # ttk.Label(sensor_frame, textvariable=self.time_var).pack(anchor="w")
 
         ttk.Label(sensor_frame, textvariable=self.temp_var).grid(row=0, column=0, padx=5, sticky="w")
         ttk.Label(sensor_frame, textvariable=self.battery_var).grid(row=0, column=1, padx=5, sticky="w")
         ttk.Label(sensor_frame, textvariable=self.time_var).grid(row=0, column=2, padx=5, sticky="w")
 
         # ---- PLOTS ----
-        fig = Figure(figsize=(8, 6))
+        fig = Figure(figsize=(12, 9))
         self.ax_acc_time = fig.add_subplot(221)
         self.ax_acc_freq = fig.add_subplot(222)
         self.ax_vel_time = fig.add_subplot(223)
         self.ax_vel_freq = fig.add_subplot(224)
 
-        fig.tight_layout(pad=6.0)  # increase padding between subplots
-
         self.canvas = FigureCanvasTkAgg(fig, master=self.main_frame)
+        fig.tight_layout(pad=7.0)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill="both", expand=True, pady=10, padx=10)
 
-        # Data buffers
-        self.time_data = []
-        self.acc_data = []
-        self.vel_data = []
-
-        start_acceleration_stream(self)
         # Start periodic updates
         self.root.after(1000, lambda: update_temp_time(self))
-        self.root.after(200, lambda: update_plot_display(self))
+        self.root.after(200, lambda: update_plot_display(info=self.parent.device_map[address],
+                                                         canvas=self.canvas,
+                                                         ax_acc_time=self.ax_acc_time,
+                                                         ax_vel_time=self.ax_vel_time,
+                                                         ax_acc_freq=self.ax_acc_freq,
+                                                         ax_vel_freq=self.ax_vel_freq
+                                                         ))
+        sensor_frame.pack(fill="x", pady=10)
 
         self.enable_editors()
 
@@ -114,17 +113,6 @@ class ASensorParameterApp:
             editor.widget["state"] = "normal"
             editor.status.set("Connected")
             threading.Thread(target=editor.read_value, daemon=True).start()
-
-    def update_client_reference(self):
-        self.client = self.parent.device_clients.get(self.sensor_address)
-
-    async def read_data(self):
-        client = self.sensor_connection.get_client()
-        if client and client.is_connected:
-            # read BLE data normally
-            pass
-        else:
-            print(f"Sensor {self.address} not connected")
 
 
 class SensorConnection:
@@ -164,16 +152,5 @@ class SensorConnection:
             print(f"Reconnected to {self.address}")
         except Exception as e:
             print(f"Failed to reconnect {self.address}: {e}")
-    # async def reconnect(self):
-    #     if self.client and getattr(self.client, "is_connected", False):
-    #         print(f"Already connected to {self.address}")
-    #         return  # reuse the existing client
-    #     try:
-    #         self.client = BleakClient(self.address)
-    #         await self.client.connect()
-    #         print(f"Reconnected to {self.address}")
-    #     except Exception as e:
-    #         print(f"Failed to reconnect {self.address}: {e}")
-    #         self.client = None
 
 

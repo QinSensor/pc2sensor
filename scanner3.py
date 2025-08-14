@@ -6,7 +6,7 @@ from tkinter import ttk, messagebox
 from bleak import BleakScanner, BleakClient
 import subprocess
 from a_sensor import ASensorParameterApp, SensorConnection
-from utils.plot_utils import start_acceleration_stream, start_acceleration_stream_Scanner
+from utils.plot_utils import  start_acceleration_stream_Scanner
 # from utils.plot_utils import start_acceleration_stream
 from utils.sensor_map import UUID_MAP, MAPPINGS  # Ensure you have these mappings
 
@@ -31,6 +31,7 @@ class BLEDeviceScanner:
         self.device_map = {}  # {address: {...}}
         self.device_clients = {}    # Address → connected BleakClient
         threading.Thread(target=self.scan_loop, daemon=True).start()
+
 
 
     def scan_loop(self):
