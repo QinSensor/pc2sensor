@@ -91,7 +91,7 @@ class ASensorParameterApp:
         self.ax_vel_time = fig.add_subplot(223)
         self.ax_vel_freq = fig.add_subplot(224)
 
-        fig.tight_layout(pad=3.0)  # increase padding between subplots
+        fig.tight_layout(pad=6.0)  # increase padding between subplots
 
         self.canvas = FigureCanvasTkAgg(fig, master=self.main_frame)
         self.canvas.draw()
