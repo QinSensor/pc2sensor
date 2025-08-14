@@ -41,8 +41,8 @@ def update_plot_display(app):
 
 
 def update_plots(ax_acc_time, ax_acc_freq, ax_vel_time, ax_vel_freq, time_data, acc_data, vel_data, canvas):
-    print("Updating acc_time:", len(time_data))
-    print("Updating acc_freq:", len(acc_data))
+    # print("Updating acc_time:", len(time_data))
+    # print("Updating acc_freq:", len(acc_data))
     # --- Acceleration vs Time ---
     ax_acc_time.clear()
     ax_acc_time.plot(time_data, acc_data)
