@@ -33,7 +33,7 @@ class ASensorParameterApp:
         self.editors = {}
 
         self.main_frame = ttk.Frame(root)
-        self.main_frame.pack(padx=10, pady=10)
+        self.main_frame.pack(padx=0, pady=0)
 
         # Create editors but disable until connected
         for param_key in UUID_MAP.keys():
@@ -51,13 +51,13 @@ class ASensorParameterApp:
         self.commit_status_label.pack()
 
         conn_frame = ttk.Frame(self.main_frame)
-        conn_frame.pack(fill="x", pady=5)
+        conn_frame.pack(fill="x", pady=0)
 
         self.connect_btn = ttk.Button(conn_frame, text="Connect", command=lambda: connect_sensor(self))
-        self.connect_btn.pack(side="left", padx=5)
+        self.connect_btn.pack(side="left", padx=0)
 
         self.disconnect_btn = ttk.Button(conn_frame, text="Disconnect", command=lambda: disconnect_sensor(self))
-        self.disconnect_btn.pack(side="left", padx=5)
+        self.disconnect_btn.pack(side="left", padx=0)
 
         # Connection status
         initial_status = "Connected" if self.client.is_connected else "Disconnected"
@@ -66,7 +66,7 @@ class ASensorParameterApp:
 
         # Device actions in same line
         actions_frame = ttk.LabelFrame(conn_frame, text="Device Actions")
-        actions_frame.pack(side="left", padx=5)
+        actions_frame.pack(side="left", padx=0)
         BLEActionButtons(actions_frame, self.client)
 
         # ---- TEMPERATURE & BATTERY ----
@@ -76,9 +76,13 @@ class ASensorParameterApp:
         self.temp_var = tk.StringVar(value="Temp: -- °C")
         self.battery_var = tk.StringVar(value="Battery: -- V")
         self.time_var = tk.StringVar(value="Time: --:--:--")
-        ttk.Label(sensor_frame, textvariable=self.temp_var).pack(anchor="w")
-        ttk.Label(sensor_frame, textvariable=self.battery_var).pack(anchor="w")
-        ttk.Label(sensor_frame, textvariable=self.time_var).pack(anchor="w")
+        # ttk.Label(sensor_frame, textvariable=self.temp_var).pack(anchor="w")
+        # ttk.Label(sensor_frame, textvariable=self.battery_var).pack(anchor="w")
+        # ttk.Label(sensor_frame, textvariable=self.time_var).pack(anchor="w")
+
+        ttk.Label(sensor_frame, textvariable=self.temp_var).grid(row=0, column=0, padx=5, sticky="w")
+        ttk.Label(sensor_frame, textvariable=self.battery_var).grid(row=0, column=1, padx=5, sticky="w")
+        ttk.Label(sensor_frame, textvariable=self.time_var).grid(row=0, column=2, padx=5, sticky="w")
 
         # ---- PLOTS ----
         fig = Figure(figsize=(8, 6))
@@ -87,9 +91,11 @@ class ASensorParameterApp:
         self.ax_vel_time = fig.add_subplot(223)
         self.ax_vel_freq = fig.add_subplot(224)
 
+        fig.tight_layout(pad=3.0)  # increase padding between subplots
+
         self.canvas = FigureCanvasTkAgg(fig, master=self.main_frame)
         self.canvas.draw()
-        self.canvas.get_tk_widget().pack(fill="both", expand=True)
+        self.canvas.get_tk_widget().pack(fill="both", expand=True, pady=10, padx=10)
 
         # Data buffers
         self.time_data = []
