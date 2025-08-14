@@ -102,11 +102,16 @@ def start_acceleration_stream_Scanner(sender, info, loop, calib):
             print("calibration is: ", calib_value)
             print("Data length of one notification:", len(acc_values))
 
-        # Append every reading
+        # # Append every reading
+        # info["data"].append({
+        #     "timestamp": now,
+        #     "acc_mean": acc_mean,
+        #     "raw": acc_values
+        # })
         info["data"].append({
-            "timestamp": now,
-            "acc_mean": acc_mean,
-            "raw": acc_values
+            "timestamp": round(now, 2),
+            "acc_mean": round(acc_mean, 2),
+            "raw": [round(v, 2) for v in acc_values]
         })
 
     async def start_notify():
