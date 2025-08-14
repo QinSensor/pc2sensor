@@ -16,7 +16,7 @@ def update_plot_display(app):
     app.acc_data = app.acc_data[-max_points:] if app.acc_data else [0]
     app.vel_data = app.vel_data[-max_points:] if app.vel_data else [0]
 
-    print(len(app.time_data), len(app.acc_data), len(app.vel_data))
+    # print(len(app.time_data), len(app.acc_data), len(app.vel_data))
 
     # Update plots using your plotting function
     update_plots(
