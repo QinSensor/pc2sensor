@@ -67,7 +67,7 @@ class BLEParameterEditor:
             else:
                 label = str(raw_val)
             self.param_final_values[self.param_key] = label
-            print("Debug: final:", self.param_final_values)
+            # print("Debug: final:", self.param_final_values)
             if self.param_key == "trigger_delay":
                 label = int(self.param_final_values["trigger_delay"])  # TODO ask Jim about its definiction
 

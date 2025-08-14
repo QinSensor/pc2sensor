@@ -9,7 +9,7 @@ DATA_UUID, data_size = UUID_DATA["data"]
 calb_uuid, calb_size = UUID_DATA["calibration"]
 
 def update_plot_display(info, canvas, ax_acc_time, ax_vel_time, ax_acc_freq, ax_vel_freq, max_points=200):
-    print("Total Notification:", len(info["data"]))
+    # print("Total Notification:", len(info["data"]))
     # Limit data size
     # plot_data = info["data"]
     plot_data = info["data"][-max_points:]
@@ -34,6 +34,18 @@ def update_plot_display(info, canvas, ax_acc_time, ax_vel_time, ax_acc_freq, ax_
     ax_vel_time.set_xlabel("Time (s)")
     ax_vel_time.set_ylabel("Velocity")
     ax_vel_time.legend()
+
+    # def plot_fft_async(ax, data, time_data, title, color="green"):
+    #     def update(freqs, fft_vals):
+    #         ax.clear()
+    #         ax.plot(freqs, fft_vals, color=color)
+    #         ax.set_title(title)
+    #         ax.set_xlabel("Frequency (Hz)")
+    #         ax.set_ylabel("Magnitude")
+    #         ax.figure.canvas.draw_idle()
+    #
+    #     compute_fft_async(data, time_data, update)
+
 
     # Helper function for FFT plot
     def plot_fft(ax, data, time_data, title, color="green"):
@@ -64,6 +76,19 @@ def update_plot_display(info, canvas, ax_acc_time, ax_vel_time, ax_acc_freq, ax_
     # Schedule next update in 200 ms
     canvas.get_tk_widget().after(200, lambda: update_plot_display(info, canvas, ax_acc_time, ax_vel_time, ax_acc_freq, ax_vel_freq, max_points))
 
+
+from threading import Thread
+
+def compute_fft_async(data, time_data, callback):
+    def worker():
+        n = len(data)
+        if n > 1:
+            dt_arr = np.diff(time_data)
+            dt = np.mean(dt_arr[dt_arr > 0]) if np.any(dt_arr > 0) else 1e-6
+            freqs = np.fft.rfftfreq(n, d=dt)
+            fft_vals = np.abs(np.fft.rfft(data))
+            callback(freqs, fft_vals)
+    Thread(target=worker, daemon=True).start()
 
 def start_acceleration_stream_Scanner(sender, info, loop, calib):
     if "count_notify" not in info:
@@ -99,17 +124,28 @@ def start_acceleration_stream_Scanner(sender, info, loop, calib):
         })
 
         info["count_notify"] += 1
-        print("Notification count:", info["count_notify"])
+        if info["count_notify"] % 20 == 0:
+            print("Notification count:", info["count_notify"])
 
-    async def start_notify():
+            if len(info["data"]) > 1:
+                duration = info["data"][-1]["timestamp"] - info["data"][0]["timestamp"]
+                print("In Handler-Get notified time:", duration)
+
+    async def start_notify_task():
         print("\nNotify:")
+        print("sender: ", sender)
+        print("Connected: ", sender.is_connected)
         if sender and sender.is_connected:
+            # Start notifications
             await sender.start_notify(DATA_UUID, notification_handler)
-            print("Get notified")
+            print("Get notified time: ", info["data"][-1]["timestamp"]-info["data"][0]["timestamp"])   # never run
         else:
             print("Client not connected, cannot start notifications")
 
     # Schedule the coroutine safely from synchronous context
-    asyncio.run_coroutine_threadsafe(start_notify(), loop)
+    asyncio.run_coroutine_threadsafe(start_notify_task(), loop)
     print("Finish.")
-
+    # print("Notifications started — returning control immediately")
+    # if len(info["data"]) > 1:
+    #     print("Initial Get notified time:", info["data"][-1]["timestamp"] - info["data"][0]["timestamp"])
+        #

@@ -19,7 +19,7 @@ class BLEDeviceScanner:
         self.root = root
         self.root.title("BluVib Devices")
 
-        columns = ("Mac Address", "BLE Name", "Connected", "Mode", "Readings", "Seen", "Action")
+        columns = ("Mac Address", "BLE Name", "Connected", "Mode", "Count_Connect", "Count_Notify", "Seen", "Action")
         self.tree = ttk.Treeview(root, columns=columns, show="headings")
         for col in columns:
             self.tree.heading(col, text=col)
@@ -50,10 +50,11 @@ class BLEDeviceScanner:
                     info = self.device_map.setdefault(dev.address, {
                         "name": dev.name,
                         "address": dev.address,  # Add this line here
+                        "count_notify": 0,
                         "data": [],
                         "connected": False,
                         "mode": "Unknown",  # Qin: in this mode, mode is not read
-                        "readings": 0,  # starts at 0
+                        "count_connection": 0,  # starts at 0
                         "seen": now
                     })
                     info["seen"] = now    # time
@@ -78,9 +79,11 @@ class BLEDeviceScanner:
                     if client and client.is_connected:
                         info["connected"] = True
                         info["mode"] = await self.read_value_async(sensor_conn, "mode")
-                        info["readings"] += 1
+                        info["count_connection"] += 1
+                        info["count_notify"] = 0
                         info["calibration"] = await self.read_value_async(sensor_conn, "calibration")
                         start_acceleration_stream_Scanner(client, info, self.loop, info["calibration"])
+                        info["data"] = []
                     else:
                         info["connected"] = False
 
@@ -121,19 +124,22 @@ class BLEDeviceScanner:
     def refresh_table(self):
         print("Refreshing UI table")
         self.tree.delete(*self.tree.get_children())
+        # print("map, ", self.device_map.items())
         for addr, info in self.device_map.items():
             seen_diff = int(time.time() - info["seen"])
             seen_str = time.strftime("%Hh %Mm %Ss ago", time.gmtime(seen_diff))
+            print(info["data"])
             self.tree.insert("", tk.END, values=(
                 addr,
                 info["name"],
                 str(info["connected"]),
                 info.get("mode", "Unknown"),       # Display last known mode
-                info["readings"],
+                info["count_connection"],
+                len(info["data"]),
                 seen_str,
                 "View"
             ))
-            print("RawData for ", addr, "is ", info["data"])
+            # print("RawData for ", addr, "is ", info["data"])
 
     # Method called by App2 after commit to remove sensor immediately
     async def on_sensor_commit(self, sensor_address):
@@ -159,7 +165,7 @@ class BLEDeviceScanner:
             "connected": False,
             "mode": "Manual",
             "data": [],
-            "readings": 0,
+            "count_connection": 0,
             "seen": now,
             "calibration": 0
         })
@@ -168,7 +174,7 @@ class BLEDeviceScanner:
         if sensor_conn.is_connected:
             info["connected"] = True
             info["mode"] = await self.read_value_async(sensor_conn.get_client(), "mode")
-            info["readings"] += 1
+            info["count_connection"] += 1
             print("Get data***********")
 
         else:

@@ -42,7 +42,7 @@ class ASensorParameterApp:
                                         self.param_final_values, self.loop, label=label_text)
             self.editors[param_key] = editor
 
-        print("Debug: final values: ", self.param_final_values)
+        # print("Debug: final values: ", self.param_final_values)
 
         button_frame = tk.Frame(self.main_frame)
         button_frame.pack(pady=5)
@@ -145,11 +145,12 @@ class SensorConnection:
         try:
             if self.client and getattr(self.client, "is_connected", False):
                 await self.client.disconnect()
-            # if self.client and self.client.is_connected:
-            #     await self.client.disconnect()
+            if self.client and self.client.is_connected:
+                await self.client.disconnect()
             self.client = BleakClient(self.address)
             await self.client.connect()
             print(f"Reconnected to {self.address}")
+
         except Exception as e:
             print(f"Failed to reconnect {self.address}: {e}")
 
